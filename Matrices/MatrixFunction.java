@@ -1,6 +1,5 @@
 package Matrices;
 
-import java.util.Map;
 
 public class MatrixFunction {
     /*

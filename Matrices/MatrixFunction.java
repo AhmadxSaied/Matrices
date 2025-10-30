@@ -1,6 +1,5 @@
 package Matrices;
 
-
 public class MatrixFunction {
     /*
      * If there is any bugs please try to solve them and tell me
@@ -127,7 +126,7 @@ public class MatrixFunction {
         return Matrix_copy;
     }
 
-    public static Double[][] naive_Gauss_With_Pivot_and_Scale(Double Matrix[][]) {
+    public static Double[][] naive_Gauss_With_Pivot_and_Scale(Double Matrix[][], Boolean Jordan) {
         Double Matrix_copy[][] = Matrix;
         try {
             for (int i = 0; i < Matrix_copy.length; i++) {
@@ -135,8 +134,8 @@ public class MatrixFunction {
                  * Here We will introduce Scaling
                  * We want to Normalize First then keep track of the Largest Magnitude
                  * Pivot after we normalized
-                 * We will Have an array each corresponding index refers to the 
-                 * Normalized pivot 
+                 * We will Have an array each corresponding index refers to the
+                 * Normalized pivot
                  * We keep track of the index With the highest magnitude normalized
                  * pivot value
                  * and We swap Like before
@@ -152,7 +151,7 @@ public class MatrixFunction {
                         }
                     }
                     /*
-                     * Here We calculate the scale which is pivot/ max value in row 
+                     * Here We calculate the scale which is pivot/ max value in row
                      */
                     scale[j] = Math.abs(Matrix_copy[j][j] / max);
                     if (scale[j] > overAllMax) {
@@ -166,7 +165,10 @@ public class MatrixFunction {
                 /*
                  * Here is the same as before nothing new
                  */
-                for (int j = i + 1; j < Matrix_copy.length; j++) {
+                for (int j = Jordan ? 0 : i + 1; j < Matrix_copy.length; j++) {
+                    if (Jordan && i == j) {
+                        continue;
+                    }
                     double Multiplier = (Matrix_copy[j][i]) / (Matrix_copy[i][i]);
                     for (int k = 0; k < Matrix_copy[i].length; k++) {
                         Matrix_copy[j][k] = (Matrix_copy[i][k] * Multiplier) - Matrix_copy[j][k];
@@ -180,5 +182,101 @@ public class MatrixFunction {
             System.out.println("Division by Zero Happend");
         }
         return Matrix_copy;
+    }
+
+    public static Double[][][] Crout_LU(Double[][] Matrix) {
+        Double L[][] = new Double[Matrix.length][Matrix[0].length];
+        Double U[][] = new Double[Matrix.length][Matrix[0].length];
+        for (int i = 0; i < Matrix.length; i++) {
+            for (int j = 0; j < Matrix[0].length; j++) {
+                if (i == j) {
+                    U[i][j] = 1.0;
+                    if (j != 0) {
+                        Double sum = 0.0;
+                        for (int k = 0; k < j; k++) {
+                            sum += L[i][k] * U[k][i];
+                        }
+                        L[i][j] = Matrix[i][j] - sum;
+                    }
+
+                }
+                if (i < j) {
+                    L[i][j] = 0.0;
+                }
+                if (j < i) {
+                    U[i][j] = 0.0;
+                }
+                if (j == 0) {
+                    L[i][0] = Matrix[i][0];
+                }
+                if (i > j && j != 0) {
+                    Double sum = 0.0;
+                    for (int k = 0; k < j; k++) {
+                        sum += L[i][k] * U[k][j];
+                    }
+                    L[i][j] = Matrix[i][j] - sum;
+                }
+
+                if (j > i) {
+                    Double sum = 0.0;
+                    for (int k = 0; k < i; k++) {
+                        sum += L[i][k] * U[k][j];
+                    }
+                    U[i][j] = (Matrix[i][j] - sum) / L[i][i];
+                }
+            }
+        }
+        Double LU[][][] = new Double[2][Matrix.length][Matrix[0].length];
+        LU[0] = L;
+        LU[1] = U;
+        return LU;
+    }
+
+    public static Double[][][] LU(Double[][] Matrix) {
+        Double L[][] = new Double[Matrix.length][Matrix.length];
+        for (int i = 0; i < Matrix.length; i++) {
+            for (int j = 0; j < Matrix.length; j++) {
+                L[i][j] = 0.0;
+            }
+        }
+        for (int i = 0; i < Matrix[0].length; i++) {
+            L[i][i] = 1.0;
+            for (int k = i + 1; k < Matrix.length; k++) {
+                Double Multiplier = Matrix[k][i] / Matrix[i][i];
+                for (int j = 0; j < Matrix[i].length; j++) {
+                    Matrix[k][j] = (Matrix[i][j] * -1.0 * Multiplier) + Matrix[k][j];
+                }
+                L[k][i] = Multiplier;
+                L[k][k] = 1.0;
+            }
+
+        }
+        Double[][][] LU = new Double[2][Matrix.length][Matrix[0].length];
+        LU[0] = L;
+        LU[1] = Matrix;
+        return LU;
+    }
+
+    public static Double[] LU_Solve(Double[][] L, Double[][] U, Double[] b) {
+        Double[] Y = new Double[b.length];
+        for (int i = 0; i < L.length; i++) {
+            Double sum = 0.0;
+            for (int j = 0; j < i; j++) {
+                sum += L[i][j] * Y[j];
+            }
+            Y[i] = (b[i] - sum) / L[i][i];
+        }
+        Double[] Sol = new Double[b.length];
+        Sol[b.length - 1] = (Y[Y.length - 1] / U[Y.length - 1][Y.length - 1]);
+        for (int i = U.length - 2; i >= 0; i--) {
+
+            Double sum = 0.0;
+
+            for (int j = i + 1; j < U[i].length; j++) {
+                sum += U[i][j] * Sol[j];
+            }
+            Sol[i] = (Y[i] - sum) / U[i][i];
+        }
+        return Sol;
     }
 }

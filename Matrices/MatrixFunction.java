@@ -28,7 +28,7 @@ public class MatrixFunction {
                      */
                     double Multiplier = (Matrix_copy[j][i]) / (Matrix_copy[i][i]);
                     for (int k = 0; k < Matrix_copy[i].length; k++) {
-                        Matrix_copy[j][k] = Matrix_copy[i][k] * Multiplier - Matrix_copy[j][k];
+                        Matrix_copy[j][k] = (Matrix_copy[i][k] * Multiplier * -1.0) + Matrix_copy[j][k];
                     }
                     /*
                      * There are three loops so we can say its O(n^3)
@@ -113,7 +113,7 @@ public class MatrixFunction {
                 for (int j = i + 1; j < Matrix_copy.length; j++) {
                     double Multiplier = (Matrix_copy[j][i]) / (Matrix_copy[i][i]);
                     for (int k = 0; k < Matrix_copy[i].length; k++) {
-                        Matrix_copy[j][k] = (Matrix_copy[i][k] * Multiplier) - Matrix_copy[j][k];
+                        Matrix_copy[j][k] = (Matrix_copy[i][k] * Multiplier * -1.0) + Matrix_copy[j][k];
                     }
                 }
                 /*
@@ -171,7 +171,7 @@ public class MatrixFunction {
                     }
                     double Multiplier = (Matrix_copy[j][i]) / (Matrix_copy[i][i]);
                     for (int k = 0; k < Matrix_copy[i].length; k++) {
-                        Matrix_copy[j][k] = (Matrix_copy[i][k] * Multiplier) - Matrix_copy[j][k];
+                        Matrix_copy[j][k] = (Matrix_copy[i][k] * Multiplier * -1.0) + Matrix_copy[j][k];
                     }
                 }
                 /*
@@ -278,5 +278,34 @@ public class MatrixFunction {
             Sol[i] = (Y[i] - sum) / U[i][i];
         }
         return Sol;
+    }
+
+    public static Double[][] Cholesky(Double[][] Matrix) {
+        Double[][] L = new Double[Matrix.length][Matrix[0].length];
+        for (int i = 0; i < Matrix.length; i++) {
+            for (int j = 0; j < Matrix.length; j++) {
+                if(j>i){
+                    L[i][j]=0.0;
+                }else{
+                Double sum = 0.0;
+                for (int k = 0; k < j; k++) {
+                    if (i == j) {
+                        sum+=Math.pow(L[i][k],2);
+                    }else{
+                        sum+= L[i][k] * L[j][k];
+                    }
+                }
+                if(i==j){
+                    if(Matrix[i][j]-sum <0){
+                        throw new Error("Not Positive Defenite");
+                    }
+                    L[i][j] = Math.sqrt(Matrix[i][j]-sum);
+                }else{
+                    L[i][j] = (Matrix[i][j]-sum)/L[j][j];
+                }
+            }
+            }
+        }
+        return L;
     }
 }

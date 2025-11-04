@@ -1,5 +1,9 @@
 package Matrices;
 
+import java.security.NoSuchProviderException;
+import java.util.ArrayList;
+import java.util.List;
+
 public class MatrixFunction {
     /*
      * If there is any bugs please try to solve them and tell me
@@ -28,7 +32,7 @@ public class MatrixFunction {
                      */
                     double Multiplier = (Matrix_copy[j][i]) / (Matrix_copy[i][i]);
                     for (int k = 0; k < Matrix_copy[i].length; k++) {
-                        Matrix_copy[j][k] = (Matrix_copy[i][k] * Multiplier * -1.0) + Matrix_copy[j][k];
+                        Matrix_copy[j][k] = (Matrix_copy[i][k] * Multiplier * -1) + Matrix_copy[j][k];
                     }
                     /*
                      * There are three loops so we can say its O(n^3)
@@ -284,28 +288,121 @@ public class MatrixFunction {
         Double[][] L = new Double[Matrix.length][Matrix[0].length];
         for (int i = 0; i < Matrix.length; i++) {
             for (int j = 0; j < Matrix.length; j++) {
-                if(j>i){
-                    L[i][j]=0.0;
-                }else{
-                Double sum = 0.0;
-                for (int k = 0; k < j; k++) {
+                if (j > i) {
+                    L[i][j] = 0.0;
+                } else {
+                    Double sum = 0.0;
+                    for (int k = 0; k < j; k++) {
+                        if (i == j) {
+                            sum += Math.pow(L[i][k], 2);
+                        } else {
+                            sum += L[i][k] * L[j][k];
+                        }
+                    }
                     if (i == j) {
-                        sum+=Math.pow(L[i][k],2);
-                    }else{
-                        sum+= L[i][k] * L[j][k];
+                        if (Matrix[i][j] - sum < 0) {
+                            throw new Error("Not Positive Defenite");
+                        }
+                        L[i][j] = Math.sqrt(Matrix[i][j] - sum);
+                    } else {
+                        L[i][j] = (Matrix[i][j] - sum) / L[j][j];
                     }
                 }
-                if(i==j){
-                    if(Matrix[i][j]-sum <0){
-                        throw new Error("Not Positive Defenite");
-                    }
-                    L[i][j] = Math.sqrt(Matrix[i][j]-sum);
-                }else{
-                    L[i][j] = (Matrix[i][j]-sum)/L[j][j];
-                }
-            }
             }
         }
         return L;
+    }
+
+    public static Double[][] Matrix_Multiplication(Double[][] Matrix_1, Double[][] Matrix_2) {
+        if (Matrix_1[0].length == Matrix_2.length) {
+            Double Result[][] = new Double[Matrix_1.length][Matrix_2[0].length];
+            for (int i = 0; i < Matrix_1.length; i++) {
+                for (int j = 0; j < Matrix_2[0].length; j++) {
+                    Double Sum = 0.0;
+                    for (int k = 0; k < Matrix_2.length; k++) {
+                        Sum += Matrix_1[i][k] * Matrix_2[k][j];
+                    }
+                    Result[i][j] = Sum;
+                }
+            }
+            return Result;
+        }
+        return null;
+    }
+
+    public static Double[][] Matrix_Subtraction(Double[][] Matrix_1, Double[][] Matrix_2) {
+        if (Matrix_1.length == Matrix_2.length && Matrix_1[0].length == Matrix_2[0].length) {
+            Double Result[][] = new Double[Matrix_2.length][Matrix_1[0].length];
+            for (int i = 0; i < Matrix_1.length; i++) {
+                for (int j = 0; j < Matrix_1[0].length; j++) {
+                    Result[i][j] = Matrix_1[i][j] - Matrix_2[i][j];
+                }
+            }
+            return Result;
+        }
+        return null;
+    }
+
+    public static Double[][] Transpose(Double[][] Matrix_1) {
+        Double Result[][] = new Double[Matrix_1[0].length][Matrix_1.length];
+        for (int i = 0; i < Matrix_1.length; i++) {
+            for (int j = 0; j < Matrix_1[0].length; j++) {
+                Result[j][i] = Matrix_1[i][j];
+            }
+        }
+        return Result;
+
+    }
+
+    public static Double[][] Scaler(Double[][] Matrix_1, Double Scaler) {
+        Double Result[][] = new Double[Matrix_1[0].length][Matrix_1.length];
+        for (int i = 0; i < Matrix_1.length; i++) {
+            for (int j = 0; j < Matrix_1[0].length; j++) {
+                Result[i][j] = Matrix_1[i][j] * Scaler;
+            }
+        }
+        return Result;
+    }
+
+    public static List<Double> PowerMethod(Double[][] Matrix, Double Tolerance, Integer k) {
+        Double InitialGuess[][] = new Double[Matrix[0].length][1];
+        int NoEigen = k;
+        List<Double> EigenValues = new ArrayList<>();
+        Double B[][] = Matrix;
+        while (NoEigen > 0 && NoEigen <= Matrix.length) {
+            for (int i = 0; i < Matrix.length; i++) {
+                InitialGuess[i][0] = 1.0;
+            }
+            Double initial = 0.0;
+            Double App_EigenValue = 0.0;
+            Double Error = 1.0;
+            Double Norm = 0.0;
+            while (Error > Tolerance) {
+                Norm=0.0;
+                Double eigenVector[][] = Matrix_Multiplication(B, InitialGuess);
+                Double potential_EigenValue = 0.0;
+                for (int i = 0; i < eigenVector.length; i++) {
+                    if (Math.abs(potential_EigenValue) < Math.abs(eigenVector[i][0])) {
+                        potential_EigenValue = eigenVector[i][0];
+                    }
+                }
+                App_EigenValue = potential_EigenValue;
+                for (int i = 0; i < eigenVector.length; i++) {
+                    InitialGuess[i][0] = eigenVector[i][0] / potential_EigenValue;
+                    Norm += Math.pow(InitialGuess[i][0], 2);
+                }
+                Error = Math.abs((App_EigenValue - initial) / App_EigenValue);
+                initial = App_EigenValue;
+            }
+            Norm = Math.sqrt(Norm);
+            for (int i = 0; i < InitialGuess.length; i++) {
+                    InitialGuess[i][0] /=Norm;
+                }
+            Double Direction[][] = Scaler(Matrix_Multiplication(InitialGuess, Transpose(InitialGuess)), App_EigenValue);
+            B = Matrix_Subtraction(B, Direction);
+            EigenValues.add(App_EigenValue);
+            NoEigen--;
+        }
+        return EigenValues;
     }
 }

@@ -1,6 +1,5 @@
 package Matrices;
 
-import java.security.NoSuchProviderException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -189,8 +188,28 @@ public class MatrixFunction {
     }
 
     public static Double[][][] Crout_LU(Double[][] Matrix) {
+        /*
+         * We Firstly Initializa the L and U Matrices
+         */
         Double L[][] = new Double[Matrix.length][Matrix[0].length];
         Double U[][] = new Double[Matrix.length][Matrix[0].length];
+        /*
+         * The Loops are appling A Bunch of rules
+         * For L matrix
+         * 1. If you are Above the Diagonal the elements equal 0
+         * 2. If You are in the First Column in the original matrix the L Value is the
+         * Coressponding element in its place in the Original Matrix
+         * 3. If the row number is Higher than the Columns You need to Calculate the
+         * summation of the Previous element in the row with the Coressponding column in
+         * U
+         */
+        /*
+         * For U we have simple rules
+         * 1. Elements below diagonal is 0
+         * 2. Elements of U is The Diffrence between the element of corressponding U in
+         * Original Matrix
+         * and The summation of Previous U's multiplied by Corressponding L
+         */
         for (int i = 0; i < Matrix.length; i++) {
             for (int j = 0; j < Matrix[0].length; j++) {
                 if (i == j) {
@@ -237,6 +256,12 @@ public class MatrixFunction {
     }
 
     public static Double[][][] LU(Double[][] Matrix) {
+        /*
+         * This is the normal procedure To get the LU
+         * We apply Forward Gauss Elimination
+         * We store the Multiplier in L
+         * The Resulting Matrix of elimination is U
+         */
         Double L[][] = new Double[Matrix.length][Matrix.length];
         for (int i = 0; i < Matrix.length; i++) {
             for (int j = 0; j < Matrix.length; j++) {
@@ -262,6 +287,11 @@ public class MatrixFunction {
     }
 
     public static Double[] LU_Solve(Double[][] L, Double[][] U, Double[] b) {
+        /*
+         * We Solve LU System by carrying out Forward Substitution between L and b
+         * We then We carry out Backward Sustitution of between U and result of previous
+         * L substitution
+         */
         Double[] Y = new Double[b.length];
         for (int i = 0; i < L.length; i++) {
             Double sum = 0.0;
@@ -285,6 +315,19 @@ public class MatrixFunction {
     }
 
     public static Double[][] Cholesky(Double[][] Matrix) {
+        /*
+         * For Cholesky Decomposition we Have Two rules
+         * If the i is less than the J meaning the element is below diagonal
+         * We First need the summation of the Previous L elements and the L element of
+         * the row we are Currently calculation
+         * We get difference Between element in the corressponding original Matrix and
+         * then Divide by the L element of diagonal of column we are in [j,j]
+         * If I==J we need to get the summation of the previous elements of the row
+         * Squared
+         * we calculate the difference between the Corresponding element in the original
+         * matrix and the Summation
+         * Check That it is not a Negative Sqrt and then You have got Your L
+         */
         Double[][] L = new Double[Matrix.length][Matrix[0].length];
         for (int i = 0; i < Matrix.length; i++) {
             for (int j = 0; j < Matrix.length; j++) {
@@ -314,6 +357,9 @@ public class MatrixFunction {
     }
 
     public static Double[][] Matrix_Multiplication(Double[][] Matrix_1, Double[][] Matrix_2) {
+        /*
+         * Function For Multiplying Two Matrices
+         */
         if (Matrix_1[0].length == Matrix_2.length) {
             Double Result[][] = new Double[Matrix_1.length][Matrix_2[0].length];
             for (int i = 0; i < Matrix_1.length; i++) {
@@ -331,6 +377,9 @@ public class MatrixFunction {
     }
 
     public static Double[][] Matrix_Subtraction(Double[][] Matrix_1, Double[][] Matrix_2) {
+        /*
+         * Function for Subtracting Two Matrices
+         */
         if (Matrix_1.length == Matrix_2.length && Matrix_1[0].length == Matrix_2[0].length) {
             Double Result[][] = new Double[Matrix_2.length][Matrix_1[0].length];
             for (int i = 0; i < Matrix_1.length; i++) {
@@ -344,6 +393,9 @@ public class MatrixFunction {
     }
 
     public static Double[][] Transpose(Double[][] Matrix_1) {
+        /*
+         * Calculating the Transpose of the Matrix
+         */
         Double Result[][] = new Double[Matrix_1[0].length][Matrix_1.length];
         for (int i = 0; i < Matrix_1.length; i++) {
             for (int j = 0; j < Matrix_1[0].length; j++) {
@@ -355,6 +407,9 @@ public class MatrixFunction {
     }
 
     public static Double[][] Scaler(Double[][] Matrix_1, Double Scaler) {
+        /*
+         * Multiplying A matrix By a Scaler
+         */
         Double Result[][] = new Double[Matrix_1[0].length][Matrix_1.length];
         for (int i = 0; i < Matrix_1.length; i++) {
             for (int j = 0; j < Matrix_1[0].length; j++) {
@@ -364,11 +419,12 @@ public class MatrixFunction {
         return Result;
     }
 
-    public static List<Double> PowerMethod(Double[][] Matrix, Double Tolerance, Integer k) {
+    public static List<Eigen> PowerMethod(Double[][] Matrix, Double Tolerance, Integer k) {
         Double InitialGuess[][] = new Double[Matrix[0].length][1];
         int NoEigen = k;
-        List<Double> EigenValues = new ArrayList<>();
+        List<Eigen> EigenValues = new ArrayList<>();
         Double B[][] = Matrix;
+        int total_steps = 0;
         while (NoEigen > 0 && NoEigen <= Matrix.length) {
             for (int i = 0; i < Matrix.length; i++) {
                 InitialGuess[i][0] = 1.0;
@@ -378,7 +434,8 @@ public class MatrixFunction {
             Double Error = 1.0;
             Double Norm = 0.0;
             while (Error > Tolerance) {
-                Norm=0.0;
+                total_steps++;
+                Norm = 0.0;
                 Double eigenVector[][] = Matrix_Multiplication(B, InitialGuess);
                 Double potential_EigenValue = 0.0;
                 for (int i = 0; i < eigenVector.length; i++) {
@@ -394,15 +451,80 @@ public class MatrixFunction {
                 Error = Math.abs((App_EigenValue - initial) / App_EigenValue);
                 initial = App_EigenValue;
             }
+            String Array = "[";
+            for (int i = 0; i < InitialGuess.length; i++) {
+                Array += InitialGuess[i][0] + ", ";
+            }
+            Array += "]";
+            // System.out.println(Array);
             Norm = Math.sqrt(Norm);
             for (int i = 0; i < InitialGuess.length; i++) {
-                    InitialGuess[i][0] /=Norm;
-                }
+                InitialGuess[i][0] /= Norm;
+            }
             Double Direction[][] = Scaler(Matrix_Multiplication(InitialGuess, Transpose(InitialGuess)), App_EigenValue);
             B = Matrix_Subtraction(B, Direction);
-            EigenValues.add(App_EigenValue);
+            // Eigen Eigen = new Eigen(App_EigenValue, InitialGuess);
+            EigenValues.add(new Eigen(App_EigenValue, Array));
             NoEigen--;
         }
+        System.out.println(total_steps);
         return EigenValues;
+    }
+
+    public static class Eigen {
+        private Double EigenValue;
+        private String EigenVector;
+
+        public Eigen(Double EigenValue, String EigenVector) {
+            this.EigenValue = EigenValue;
+            this.EigenVector = EigenVector;
+        }
+
+        @Override
+        public String toString() {
+            String Expression = "{EigenValue: " + this.EigenValue;
+            Expression += "\nEigenVector: " + this.EigenVector + "\n\n";
+            return Expression;
+        }
+    }
+
+    public static Double[] Jacobi_GaussIteration(Double[][] Matrix, Double[] EquationResult, Double Tolerance,
+            Boolean Gauss) {
+        Double Sol[] = new Double[Matrix[0].length];
+        if (EquationResult.length == Matrix.length) {
+            Double Max_Error = Double.POSITIVE_INFINITY;
+            Double IterationSol[] = new Double[Matrix[0].length];
+            for (int i = 0; i < IterationSol.length; i++) {
+                IterationSol[i] = 1.0;
+                Sol[i] = 1.0;
+            }
+            while (Max_Error > Tolerance) {
+                Double Error = 0.0;
+                for (int i = 0; i < Matrix.length; i++) {
+                    Double Sum = EquationResult[i];
+                    for (int j = 0; j < Matrix[0].length; j++) {
+                        if (j != i) {
+                            Sum -= Sol[j] * Matrix[i][j];
+                        }
+                    }
+                    IterationSol[i] = Sum / Matrix[i][i];
+                    Error = Math.max(Error, Math.abs((IterationSol[i] - Sol[i]) / IterationSol[i]));
+                    if (Double.isInfinite(Error)) {
+                        Error = 1.0;
+                    }
+                    if (Gauss == true)
+                        Sol[i] = IterationSol[i];
+                }
+                Max_Error = Math.min(Max_Error, Error);
+                if (Gauss == false) {
+                    for (int i = 0; i < Sol.length; i++) {
+                        Sol[i] = IterationSol[i];
+                    }
+                }
+            }
+        } else {
+            throw new Error();
+        }
+        return Sol;
     }
 }

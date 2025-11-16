@@ -410,7 +410,7 @@ public class MatrixFunction {
         /*
          * Multiplying A matrix By a Scaler
          */
-        Double Result[][] = new Double[Matrix_1[0].length][Matrix_1.length];
+        Double Result[][] = new Double[Matrix_1.length][Matrix_1[0].length];
         for (int i = 0; i < Matrix_1.length; i++) {
             for (int j = 0; j < Matrix_1[0].length; j++) {
                 Result[i][j] = Matrix_1[i][j] * Scaler;
@@ -515,7 +515,7 @@ public class MatrixFunction {
                     if (Gauss == true)
                         Sol[i] = IterationSol[i];
                 }
-                Max_Error = Math.min(Max_Error, Error);
+                Max_Error = Error;
                 if (Gauss == false) {
                     for (int i = 0; i < Sol.length; i++) {
                         Sol[i] = IterationSol[i];

@@ -1,18 +1,20 @@
 package Matrices;
 
+import java.math.BigDecimal;
+import java.util.List;
+
+import Matrices.MatrixFunction_BigDecimal.Eigen;
 
 public class App {
     public static void main(String[] args) {
         Double[][] Matrix = {
-            {5.0,-1.0,1.0},
-            {2.0,8.0,-1.0},
-            {-1.0,1.0,3.0},
+            {40.0,-20.0,0.0},
+            {-20.0,40.0,-20.0},
+            {0.0,-20.0,40.0},
         };
-        Double[] EquationResult = {10.0,10.0,10.0};
-        Double Sol[] = MatrixFunction.Jacobi_GaussIteration(Matrix, EquationResult, 1e-9,true);
-        for(int i =0;i<Sol.length;i++){
-            System.out.println(Sol[i]);
-        }
+        Double[] result = {10.0,19.0,7.0};
+        List<MatrixFunction_BigDecimal.Eigen> LU = MatrixFunction_BigDecimal.PowerMethod(Matrix,1e-18,3);
+        System.out.println(LU);
 
     }
 }

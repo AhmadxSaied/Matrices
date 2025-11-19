@@ -1,9 +1,9 @@
 from decimal import Decimal, getcontext
-from fastapi import FastAPI
 from pydantic import BaseModel
+import time
+import response
+import helper
 
-
-app = FastAPI()
 
 # Defines the structure of the JSON data we expect to receive.
 class Item(BaseModel):
@@ -14,176 +14,36 @@ class Item(BaseModel):
     initial_guess: list[Decimal] = []
 
 
-# +++++++++++++++++++++++++++++++++++++++++++++
-# +++++++++++++++++ tools used ++++++++++++++++
-# +++++++++++++++++++++++++++++++++++++++++++++
-# ! forward elimination (with pivoting and scalling)
-# modify in original matrix
-def forward_elimination_withPivoting_and_scaling(size, matrix, vector_of_sol):
-    # Loop over pivots (except last row)
-    for pivot in range(size-1):
-
-        # --- 1. Partial Pivoting (Find largest ABSOLUTE magnitude) ---
-        # Initialize with a value smaller than any possible absolute magnitude
-        max_val = Decimal("-1")
-        max_row_index = pivot   # Initialize the index of the best pivot row
-        # Search from the current pivot row down to the last row
-        for row in range(pivot, size):
-            row_max = max(matrix[row], key=abs)
-            # Skip row if it is all zeros
-            if row_max == 0:
-                continue
-            # The standard for Partial Pivoting is to look for the largest absolute value
-            current_abs_val = abs(matrix[row][pivot] / row_max)  # ? scaling
-            if current_abs_val > max_val:
-                max_val = current_abs_val
-                max_row_index = row
-        # Check if the largest element found is zero
-        if max_val == 0:
-            # The matrix is singular or near-singular, and the system cannot be solved
-            return "error"
-
-        # --- 2. Perform Row Swap ---
-        # Swap rows only if the best pivot row is different from the current pivot row
-        if max_row_index != pivot:
-            # Swap rows in the matrix A
-            dummy_A = matrix[pivot]
-            matrix[pivot] = matrix[max_row_index]
-            matrix[max_row_index] = dummy_A
-            # CRITICAL: Swap corresponding elements in the solution vector b
-            dummy_b = vector_of_sol[pivot]
-            vector_of_sol[pivot] = vector_of_sol[max_row_index]
-            vector_of_sol[max_row_index] = dummy_b
-
-        # rup == rows under pivot <-- row
-        for rup in range(pivot+1, size):
-            # m == multiplier
-            m = matrix[rup][pivot] / matrix[pivot][pivot]
-            # eir == elements in row  <-- col
-            for eir in range(pivot, size):
-                matrix[rup][eir] = matrix[rup][eir] - m * matrix[pivot][eir]
-            vector_of_sol[rup] = vector_of_sol[rup] - m * vector_of_sol[pivot]
-
-# ! forward elimination (with pivoting)
-# modify in original matrix
-def forward_elimination_withPivoting(size, matrix, vector_of_sol):
-    # Loop over pivots (except last row)
-    for pivot in range(size-1):
-
-        # --- 1. Partial Pivoting (Find largest ABSOLUTE magnitude) ---
-        # Initialize with a value smaller than any possible absolute magnitude
-        max_val = Decimal("-1")
-        max_row_index = pivot   # Initialize the index of the best pivot row
-        # Search from the current pivot row down to the last row
-        for row in range(pivot, size):
-            # The standard for Partial Pivoting is to look for the largest absolute value
-            current_abs_val = abs(matrix[row][pivot])
-            if current_abs_val > max_val:
-                max_val = current_abs_val
-                max_row_index = row
-        # Check if the largest element found is zero
-        if max_val == 0:
-            # The matrix is singular or near-singular, and the system cannot be solved
-            return "error"
-
-        # --- 2. Perform Row Swap ---
-        # Swap rows only if the best pivot row is different from the current pivot row
-        if max_row_index != pivot:
-            # Swap rows in the matrix A
-            dummy_A = matrix[pivot]
-            matrix[pivot] = matrix[max_row_index]
-            matrix[max_row_index] = dummy_A
-            # CRITICAL: Swap corresponding elements in the solution vector b
-            dummy_b = vector_of_sol[pivot]
-            vector_of_sol[pivot] = vector_of_sol[max_row_index]
-            vector_of_sol[max_row_index] = dummy_b
-
-        # rup == rows under pivot <-- row
-        for rup in range(pivot+1, size):
-            # m == multiplier
-            m = matrix[rup][pivot] / matrix[pivot][pivot]
-            # eir == elements in row  <-- col
-            for eir in range(pivot, size):
-                matrix[rup][eir] = matrix[rup][eir] - m * matrix[pivot][eir]
-            vector_of_sol[rup] = vector_of_sol[rup] - m * vector_of_sol[pivot]
-
-# ! forward elimination (without pivoting) & store multipliers
-# modify in original matrix
-def forward_elimination_withoutPivoting(size, matrix, vector_of_sol):
-    array_of_multipliers = []
-    # Loop over pivots (except last row)
-    for pivot in range(size-1):
-        if matrix[pivot][pivot] == 0:
-            return "error"
-        # rup == rows under pivot <-- row
-        for rup in range(pivot+1, size):
-            # m == multiplier
-            m = matrix[rup][pivot] / matrix[pivot][pivot]
-            array_of_multipliers.append(m)
-            # eir == elements in row  <-- col
-            for eir in range(pivot, size):
-                matrix[rup][eir] = matrix[rup][eir] - m * matrix[pivot][eir]
-            vector_of_sol[rup] = vector_of_sol[rup] - m * vector_of_sol[pivot]
-
-# ! backward substitution
-def backward_substitution(size, matrix, vector_of_sol):
-    vector_of_unknowns = [0 for _ in range(size)]
-    vector_of_unknowns[size - 1] = vector_of_sol[size - 1] / \
-        matrix[size - 1][size - 1]  # find value of last unknown
-    for pivot in range(size - 2, -1, -1):
-        # s == sum
-        s = 0
-        # j == elements in right side of pivot
-        for j in range(pivot + 1, size):
-            s += vector_of_unknowns[j] * matrix[pivot][j]
-        vector_of_unknowns[pivot] = (
-            vector_of_sol[pivot] - s) / matrix[pivot][pivot]
-    return vector_of_unknowns
 
 
-def check_diagonally_dominant(size, matrix):
-    strictly_dominant = False
-    for row in range(size):
-        diag = abs(matrix[row][row])
-        row_sum = sum(abs(matrix[row][col])
-                      for col in range(size) if col != row)
-        if diag < row_sum:        # violates diagonal dominance
-            return False
-        if diag > row_sum:        # at least one strict dominance
-            strictly_dominant = True
-    return strictly_dominant
 
 # +++++++++++++++++++++++++++++++++++++++++++++
 # ++++++++++++++++ methods ++++++++++++++++++++
 # +++++++++++++++++++++++++++++++++++++++++++++
-@app.post("/naive_gauss_elimination")
 # ! Naive gauss elimination
 def Naive_gauss_elimination(item: Item):
     getcontext().prec = item.precision if item.precision is not None else 10
-    if forward_elimination_withoutPivoting(item.size, item.matrix, item.vector_of_sol) == "error":
+    if helper.forward_elimination_withoutPivoting(item.size, item.matrix, item.vector_of_sol) == "error":
         return "error"
-    vector_of_unknowns = backward_substitution(item.size, item.matrix, item.vector_of_sol)
+    vector_of_unknowns = helper.backward_substitution(item.size, item.matrix, item.vector_of_sol)
     return vector_of_unknowns
 
-@app.post("/gauss_elimination_with_partial_pivoting")
 # ! Gauss Elimination with Partial Pivoting
 def Gauss_elimination_with_partial_pivoting(item: Item):
     getcontext().prec = item.precision if item.precision is not None else 10
-    if forward_elimination_withPivoting(item.size, item.matrix, item.vector_of_sol) == "error":
+    if helper.forward_elimination_withPivoting(item.size, item.matrix, item.vector_of_sol) == "error":
         return "error"
-    vector_of_unknowns = backward_substitution(item.size, item.matrix, item.vector_of_sol)
+    vector_of_unknowns = helper.backward_substitution(item.size, item.matrix, item.vector_of_sol)
     return vector_of_unknowns
 
-@app.post("/gauss_elimination_with_partial_pivoting_and_scaling")
 # ! Gauss Elimination with Partial Pivoting and scaling
 def Gauss_elimination_with_partial_pivoting_and_scaling(item: Item):
     getcontext().prec = item.precision if item.precision is not None else 10
-    if forward_elimination_withPivoting_and_scaling(item.size, item.matrix, item.vector_of_sol) == "error":
+    if helper.forward_elimination_withPivoting_and_scaling(item.size, item.matrix, item.vector_of_sol) == "error":
         return "error"
-    vector_of_unknowns = backward_substitution(item.size, item.matrix, item.vector_of_sol)
+    vector_of_unknowns = helper.backward_substitution(item.size, item.matrix, item.vector_of_sol)
     return vector_of_unknowns
 
-@app.post("/gauss_jordan_elimination")
 # ! Gauss-Jordan elimination (with partial pivoting)
 def Gauss_Jordan_elimination(item: Item):
     getcontext().prec = item.precision if item.precision is not None else 10
@@ -232,7 +92,6 @@ def Gauss_Jordan_elimination(item: Item):
             item.vector_of_sol[rup] -= m * item.vector_of_sol[pivot]
     return item.vector_of_sol
 
-@app.post("/gauss_seidel_method")
 # ! Gauss-Seidel Method (without pivoting)
 def Gauss_Seidel_method(item: Item, max_iterations=50, tolerance=Decimal("1e-6")):
     getcontext().prec = item.precision if item.precision is not None else 10
@@ -273,7 +132,6 @@ def Gauss_Seidel_method(item: Item, max_iterations=50, tolerance=Decimal("1e-6")
     
     return {"error":f"error: Did not converge within {max_iterations} iterations. Final error: {max_relative_error}" ,"diagonally_dominant":check_diagonally_dominant(item.size, item.matrix)}
 
-@app.post("/jacobi_method")
 # ! Jacobi Method (without pivoting)
 def Jacobi_method(item: Item, max_iterations=50, tolerance=Decimal("1e-6")):
     getcontext().prec = item.precision if item.precision is not None else 10
@@ -313,7 +171,6 @@ def Jacobi_method(item: Item, max_iterations=50, tolerance=Decimal("1e-6")):
             return values_of_unknowns
     return {"error":f"error: Did not converge within {max_iterations} iterations. Final error: {max_relative_error}" ,"diagonally_dominant":check_diagonally_dominant(item.size, item.matrix)}
 
-@app.post("/LU_decomposition_Doolittle_method")
 # ! LU Decomposition Method (Doolittle's Method)
 def LU_decomposition_Doolittle_method(item: Item):
     getcontext().prec = item.precision if item.precision is not None else 10
@@ -359,7 +216,6 @@ def LU_decomposition_Doolittle_method(item: Item):
 
     return x
 
-@app.post("/LU_decomposition_Crout_method")
 # ! LU Decomposition Method (Crout's Method)
 def LU_decomposition_Crout_method(item: Item):
     getcontext().prec = item.precision if item.precision is not None else 10
@@ -405,7 +261,6 @@ def LU_decomposition_Crout_method(item: Item):
 
     return x
 
-@app.post("/LU_decomposition_Cholesky_method")
 # ! LU Decomposition Method (Cholesky's Method)
 def LU_decomposition_Cholesky_method(item: Item):
     """

@@ -2,10 +2,11 @@ from input import Input
 from response import Response
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
 import main
-origin=["https/localhost:4200"]
+origin=["http://localhost:4200"]
 methods=["Gauss_"]
-app = FastAPI
+app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origin,
@@ -16,3 +17,6 @@ app.add_middleware(
 @app.post("/solve")
 async def slove_matrix(request_data: Input) -> Response:
     method = request_data.methodID
+    
+if __name__ == "__main__":
+    uvicorn.run(app=app,port=8000)

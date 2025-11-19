@@ -93,7 +93,7 @@ def Gauss_Jordan_elimination(item: Item):
     return item.vector_of_sol
 
 # ! Gauss-Seidel Method (without pivoting)
-def Gauss_Seidel_method(item: Item, max_iterations=50, tolerance=Decimal("1e-6")):
+def Gauss_Seidel_method(item: Item):
     getcontext().prec = item.precision if item.precision is not None else 10
     values_of_unknowns = item.initial_guess[:]
     # Check for zero pivots (diagonal elements) before starting
@@ -101,7 +101,7 @@ def Gauss_Seidel_method(item: Item, max_iterations=50, tolerance=Decimal("1e-6")
         if item.matrix[i][i] == 0:
             return "error"
 
-    for k in range(max_iterations):
+    for k in range(item.max_iterations):
         previous_x = values_of_unknowns[:]
         for row in range(item.size):
             s = Decimal("0")  # s == sum
@@ -126,11 +126,11 @@ def Gauss_Seidel_method(item: Item, max_iterations=50, tolerance=Decimal("1e-6")
             elif delta != 0:
                 # If the value is 0 but changed, we haven't converged
                 max_relative_error = Decimal("1")
-        if max_relative_error < tolerance:
+        if max_relative_error < item.tolerance:
             # Convergence achieved
             return values_of_unknowns
     
-    return {"error":f"error: Did not converge within {max_iterations} iterations. Final error: {max_relative_error}" ,"diagonally_dominant":check_diagonally_dominant(item.size, item.matrix)}
+    return {"error":f"error: Did not converge within {item.max_iterations} iterations. Final error: {max_relative_error}" ,"diagonally_dominant":item.check_diagonally_dominant(item.size, item.matrix)}
 
 # ! Jacobi Method (without pivoting)
 def Jacobi_method(item: Item, max_iterations=50, tolerance=Decimal("1e-6")):

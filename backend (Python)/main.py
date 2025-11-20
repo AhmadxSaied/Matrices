@@ -1,9 +1,10 @@
 from decimal import Decimal, getcontext
 from pydantic import BaseModel
 import time
-import response
+from response import Response,Steps,addsteps
 import helper
-
+from typing import List
+import copy
 
 # Defines the structure of the JSON data we expect to receive.
 class Item(BaseModel):
@@ -12,95 +13,91 @@ class Item(BaseModel):
     matrix: list[list[Decimal]]
     vector_of_sol: list[Decimal]
     initial_guess: list[Decimal] = []
-
-
-
-
+    max_iterations:int
 
 # +++++++++++++++++++++++++++++++++++++++++++++
 # ++++++++++++++++ methods ++++++++++++++++++++
 # +++++++++++++++++++++++++++++++++++++++++++++
 # ! Naive gauss elimination
-def Naive_gauss_elimination(item: Item):
+def Naive_gauss_elimination(item: Item,all_steps:List['Steps']):
+    start_time = time.perf_counter()
+    A_copy = copy.deepcopy(item.matrix)
+    B_copy = item.vector_of_sol[:]
     getcontext().prec = item.precision if item.precision is not None else 10
-    if helper.forward_elimination_withoutPivoting(item.size, item.matrix, item.vector_of_sol) == "error":
-        return "error"
-    vector_of_unknowns = helper.backward_substitution(item.size, item.matrix, item.vector_of_sol)
-    return vector_of_unknowns
+    if helper.forward_elimination_withoutPivoting(item.size, A_copy, B_copy,all_steps) == "error":
+        end_time = time.perf_counter()
+        return Response("Error",[],round(end_time-start_time,6),0,all_steps,"Singluar matrix or division by zero ")
+    status = helper.check_havesol(item.size,item.vector_of_sol,item.matrix,all_steps)
+    if(status != "unique"):
+        end_time = time.perf_counter()
+        if(status == "None"):
+            return Response("Error",[],round(end_time-start_time,6),0,all_steps,"the system has no solution")
+        else:
+            return Response("Error",[],round(end_time-start_time,6),0,all_steps,"the system has Infinite number of solution")
+    vector_of_unknowns = helper.backward_substitution(item.size, A_copy,B_copy,all_steps)
+    end_time = time.perf_counter()
+    return Response("SUCCESS",vector_of_unknowns,round(end_time - start_time,6),0,all_steps,"")
 
 # ! Gauss Elimination with Partial Pivoting
-def Gauss_elimination_with_partial_pivoting(item: Item):
+def Gauss_elimination_with_partial_pivoting(item: Item,all_steps:List['Steps']):
+    start_time = time.perf_counter()
+    A_copy = copy.deepcopy(item.matrix)
+    B_copy = item.vector_of_sol[:]
     getcontext().prec = item.precision if item.precision is not None else 10
-    if helper.forward_elimination_withPivoting(item.size, item.matrix, item.vector_of_sol) == "error":
-        return "error"
-    vector_of_unknowns = helper.backward_substitution(item.size, item.matrix, item.vector_of_sol)
-    return vector_of_unknowns
+    if helper.forward_elimination_withPivoting(item.size, A_copy, B_copy,all_steps) == "error":
+        end_time = time.perf_counter()
+        return Response("Error",[],round(end_time-start_time,6),0,all_steps,"Singluar matrix")
+    status = helper.check_havesol(item.size,A_copy,B_copy,all_steps)
+    if(status != "unique"):
+        end_time = time.perf_counter()
+        if(status == "None"):
+            return Response("Error",[],round(end_time-start_time,6),0,all_steps,"the system has no solution")
+        else:
+            return Response("Error",[],round(end_time-start_time,6),0,all_steps,"the system has Infinite number of solution")
+    end_time = time.perf_counter()
+    vector_of_unknowns = helper.backward_substitution(item.size, A_copy, B_copy,all_steps)
+    return Response("SUCCESS",vector_of_unknowns,round(end_time - start_time,6),0,all_steps,"")
 
 # ! Gauss Elimination with Partial Pivoting and scaling
-def Gauss_elimination_with_partial_pivoting_and_scaling(item: Item):
+def Gauss_elimination_with_partial_pivoting_and_scaling(item: Item,all_steps:List['Steps']):
+    start_time = time.perf_counter()
+    A_copy = copy.deepcopy(item.matrix)
+    B_copy = item.vector_of_sol[:]
     getcontext().prec = item.precision if item.precision is not None else 10
     if helper.forward_elimination_withPivoting_and_scaling(item.size, item.matrix, item.vector_of_sol) == "error":
-        return "error"
+       end_time = time.perf_counter()
+       return Response("Error",[],round(end_time-start_time,6),0,all_steps,"Singluar matrix")
+    status = helper.check_havesol(item.size,item.vector_of_sol,item.matrix,all_steps)
+    if(status != "unique"):
+        end_time = time.perf_counter()
+        if(status == "None"):
+            return Response("Error",[],round(end_time-start_time,6),0,all_steps,"the system has no solution")
+        else:
+            return Response("Error",[],round(end_time-start_time,6),0,all_steps,"the system has Infinite number of solution")
     vector_of_unknowns = helper.backward_substitution(item.size, item.matrix, item.vector_of_sol)
-    return vector_of_unknowns
+    return Response("SUCCESS",vector_of_unknowns,round(end_time - start_time,6),0,all_steps,"")
 
 # ! Gauss-Jordan elimination (with partial pivoting)
-def Gauss_Jordan_elimination(item: Item):
+def Gauss_Jordan_elimination(item: Item,all_steps:List['Steps']):
     getcontext().prec = item.precision if item.precision is not None else 10
-    # Loop over columns/pivots
-    for pivot in range(item.size):
-        # 1. Partial Pivoting (Find largest ABSOLUTE magnitude)
-        max_val = Decimal("-1")
-        max_row_index = pivot
-        # Search for the largest element from the current pivot row downwards
-        for row in range(pivot, item.size):
-            current_abs_val = abs(item.matrix[row][pivot])
-            if current_abs_val > max_val:
-                max_val = current_abs_val
-                max_row_index = row
-        # Check for singularity
-        if max_val == 0:
-            return "error"  # Singular matrix
-        # --- Perform Row Swap ---
-        if max_row_index != pivot:
-            # Swap rows in the matrix A
-            item.matrix[pivot], item.matrix[max_row_index] = item.matrix[max_row_index], item.matrix[pivot]
-            # Swap corresponding elements in the solution vector b
-            item.vector_of_sol[pivot], item.vector_of_sol[max_row_index] = item.vector_of_sol[max_row_index], item.vector_of_sol[pivot]
-
-        # 2. Normalization (Make the pivot element equal to 1)
-        pivot_value = item.matrix[pivot][pivot]
-        # Normalize the pivot row elements (from current column to the end)
-        for eir in range(pivot, item.size):
-            item.matrix[pivot][eir] /= pivot_value
-        # Normalize the corresponding element in the solution vector
-        item.vector_of_sol[pivot] /= pivot_value
-
-        # 3. Elimination (Zero out all other entries in the pivot column)
-        # rup == row index to update
-        for rup in range(item.size):
-            # Skip the pivot row itself
-            if rup == pivot:
-                continue
-
-            # m == multiplier
-            m = item.matrix[rup][pivot]
-            # Eliminate elements in the matrix A (from current column to the end)
-            for eir in range(pivot, item.size):
-                item.matrix[rup][eir] -= m * item.matrix[pivot][eir]
-            # Eliminate element in the solution vector b
-            item.vector_of_sol[rup] -= m * item.vector_of_sol[pivot]
+    error_status = helper.forward_elimination_withPivoting(item.size,item.matrix,item.vector_of_sol,Steps)
+    if error_status == "error":
+        return error_status
+    helper.backward_substitution(item.size,item.matrix,item.vector_of_sol,Steps)
     return item.vector_of_sol
 
 # ! Gauss-Seidel Method (without pivoting)
-def Gauss_Seidel_method(item: Item):
+def Gauss_Seidel_method(item: Item,all_steps:List['Steps']):
+    timer_start = time.perf_counter()
     getcontext().prec = item.precision if item.precision is not None else 10
-    values_of_unknowns = item.initial_guess[:]
+    values_of_unknowns = [Decimal(str(x)) for x in item.initial_guess]
     # Check for zero pivots (diagonal elements) before starting
     for i in range(item.size):
         if item.matrix[i][i] == 0:
-            return "error"
-
+            timer_stop = time.perf_counter()
+            addsteps(all_steps,"Cant use Gauss Seidel because the pivot is zero and we cant divide by zero",item.matrix,item.vector_of_sol)
+            return Response("Error",item.vector_of_sol,round(timer_stop - timer_start,6),0,all_steps,"can't divide by zero")
+    is_diagonally_dominant = helper.check_diagonally_dominant(item.size,item.vector_of_sol,item.matrix,all_steps)
     for k in range(item.max_iterations):
         previous_x = values_of_unknowns[:]
         for row in range(item.size):
@@ -126,20 +123,25 @@ def Gauss_Seidel_method(item: Item):
             elif delta != 0:
                 # If the value is 0 but changed, we haven't converged
                 max_relative_error = Decimal("1")
+        addsteps(all_steps,f"Iteration {k+1}: Relative Error = {max_relative_error:.{item.precision}f}",item.matrix,values_of_unknowns)
         if max_relative_error < item.tolerance:
             # Convergence achieved
-            return values_of_unknowns
-    
-    return {"error":f"error: Did not converge within {item.max_iterations} iterations. Final error: {max_relative_error}" ,"diagonally_dominant":item.check_diagonally_dominant(item.size, item.matrix)}
+            timer_stop = time.perf_counter()
+            Response("SUCCESS",values_of_unknowns,round(timer_stop - timer_start,6),0,all_steps,"")
+        timer_stop=time.perf_counter()
+    return Response("Error",values_of_unknowns,round(timer_stop-timer_start,6),item.max_iterations,all_steps,f"error: Did not converge within {item.max_iterations} iterations. Final error: {max_relative_error}") 
 
 # ! Jacobi Method (without pivoting)
-def Jacobi_method(item: Item, max_iterations=50, tolerance=Decimal("1e-6")):
+def Jacobi_method(item: Item,all_steps:List['Steps'] ,max_iterations=50, tolerance=Decimal("1e-6")):
+    timer_start = time.perf_counter()
     getcontext().prec = item.precision if item.precision is not None else 10
     values_of_unknowns = item.initial_guess[:]
     # Check for zero pivots (diagonal elements) before starting
     for i in range(item.size):
         if item.matrix[i][i] == 0:
-            return "error"
+            timer_stop = time.perf_counter()
+            addsteps(all_steps,"Cant use Gauss Seidel because the pivot is zero and we cant divide by zero",item.matrix,item.vector_of_sol)
+            return Response("Error",item.vector_of_sol,round(timer_stop - timer_start,6),0,all_steps,"can't divide by zero")
 
     for k in range(max_iterations):
         previous_x = values_of_unknowns[:]
@@ -168,11 +170,13 @@ def Jacobi_method(item: Item, max_iterations=50, tolerance=Decimal("1e-6")):
                 max_relative_error = Decimal("1")
         if max_relative_error < tolerance:
             # Convergence achieved
-            return values_of_unknowns
-    return {"error":f"error: Did not converge within {max_iterations} iterations. Final error: {max_relative_error}" ,"diagonally_dominant":check_diagonally_dominant(item.size, item.matrix)}
+            timer_stop = time.perf_counter()
+            return Response("SUCCESS",values_of_unknowns,round(timer_stop - timer_start,6),k+1,all_steps,"")
+        timer_stop = time.perf_counter()
+    return Response("Error",values_of_unknowns,round(timer_stop-timer_start,6),item.max_iterations,all_steps,f"error: Did not converge within {item.max_iterations} iterations. Final error: {max_relative_error}")
 
 # ! LU Decomposition Method (Doolittle's Method)
-def LU_decomposition_Doolittle_method(item: Item):
+def LU_decomposition_Doolittle_method(item: Item,all_steps:List['Steps']):
     getcontext().prec = item.precision if item.precision is not None else 10
     # Step 1: LU Decomposition (Doolittle's Method)
     L = [[Decimal("0") for _ in range(item.size)] for _ in range(item.size)]
@@ -217,7 +221,7 @@ def LU_decomposition_Doolittle_method(item: Item):
     return x
 
 # ! LU Decomposition Method (Crout's Method)
-def LU_decomposition_Crout_method(item: Item):
+def LU_decomposition_Crout_method(item: Item,all_steps:List['Steps']):
     getcontext().prec = item.precision if item.precision is not None else 10
     # Step 1: LU Decomposition (Crout's Method)
     L = [[Decimal("0") for _ in range(item.size)] for _ in range(item.size)]
@@ -262,7 +266,7 @@ def LU_decomposition_Crout_method(item: Item):
     return x
 
 # ! LU Decomposition Method (Cholesky's Method)
-def LU_decomposition_Cholesky_method(item: Item):
+def LU_decomposition_Cholesky_method(item: Item,all_steps:List['Steps']):
     """
     Performs Cholesky Decomposition (A = L * L^T) to solve Ax = b.
     Requires matrix A to be symmetric and positive-definite.

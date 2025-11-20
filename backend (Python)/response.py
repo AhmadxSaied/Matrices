@@ -8,6 +8,8 @@ class Steps:
     description: str
     matrixA: List[List[float]]
     matrixB:List[float]
+    L:List[List[float]]
+    U:List[List[float]]
 
 @dataclass
 class Response:

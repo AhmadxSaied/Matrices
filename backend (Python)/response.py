@@ -33,6 +33,8 @@ def addsteps(
         stepNumber=Step_number,
         description=description,
         matrixA=matrix_copy,
-        matrixB=vector_copy
+        matrixB=vector_copy,
+        L = None,
+        U = None
     )
     all_steps.append(new_step)

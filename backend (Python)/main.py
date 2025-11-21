@@ -8,18 +8,21 @@ import copy
 
 # Defines the structure of the JSON data we expect to receive.
 class Item(BaseModel):
+    MethodId: str
     precision: int | None = 10
     size: int
     matrix: list[list[Decimal]]
     vector_of_sol: list[Decimal]
     initial_guess: list[Decimal] = []
     max_iterations:int
+    Tolerance : Decimal | None = Decimal("1e-5")
 
 # +++++++++++++++++++++++++++++++++++++++++++++
 # ++++++++++++++++ methods ++++++++++++++++++++
 # +++++++++++++++++++++++++++++++++++++++++++++
 # ! Naive gauss elimination
 def Naive_gauss_elimination(item: Item,all_steps:List['Steps']):
+    print(item)
     start_time = time.perf_counter()
     A_copy = copy.deepcopy(item.matrix)
     B_copy = item.vector_of_sol[:]
@@ -28,12 +31,14 @@ def Naive_gauss_elimination(item: Item,all_steps:List['Steps']):
         end_time = time.perf_counter()
         return Response("Error",[],round(end_time-start_time,6),0,all_steps,"Singluar matrix or division by zero ")
     status = helper.check_havesol(item.size,item.vector_of_sol,item.matrix,all_steps)
+    print(item.matrix)
     if(status != "unique"):
         end_time = time.perf_counter()
         if(status == "None"):
             return Response("Error",[],round(end_time-start_time,6),0,all_steps,"the system has no solution")
         else:
             return Response("Error",[],round(end_time-start_time,6),0,all_steps,"the system has Infinite number of solution")
+    print(item.matrix)
     vector_of_unknowns = helper.backward_substitution(item.size, A_copy,B_copy,all_steps)
     end_time = time.perf_counter()
     return Response("SUCCESS",vector_of_unknowns,round(end_time - start_time,6),0,all_steps,"")
@@ -132,7 +137,7 @@ def Gauss_Seidel_method(item: Item,all_steps:List['Steps']):
     return Response("Error",values_of_unknowns,round(timer_stop-timer_start,6),item.max_iterations,all_steps,f"error: Did not converge within {item.max_iterations} iterations. Final error: {max_relative_error}") 
 
 # ! Jacobi Method (without pivoting)
-def Jacobi_method(item: Item,all_steps:List['Steps'] ,max_iterations=50, tolerance=Decimal("1e-6")):
+def Jacobi_method(item: Item,all_steps:List['Steps']):
     timer_start = time.perf_counter()
     getcontext().prec = item.precision if item.precision is not None else 10
     values_of_unknowns = item.initial_guess[:]
@@ -143,7 +148,7 @@ def Jacobi_method(item: Item,all_steps:List['Steps'] ,max_iterations=50, toleran
             addsteps(all_steps,"Cant use Gauss Seidel because the pivot is zero and we cant divide by zero",item.matrix,item.vector_of_sol)
             return Response("Error",item.vector_of_sol,round(timer_stop - timer_start,6),0,all_steps,"can't divide by zero")
 
-    for k in range(max_iterations):
+    for k in range(item.max_iterations):
         previous_x = values_of_unknowns[:]
         for row in range(item.size):
             s = Decimal("0")  # s == sum
@@ -168,7 +173,7 @@ def Jacobi_method(item: Item,all_steps:List['Steps'] ,max_iterations=50, toleran
             elif delta != 0:
                 # If the value is 0 but changed, we haven't converged
                 max_relative_error = Decimal("1")
-        if max_relative_error < tolerance:
+        if max_relative_error < item.Tolerance:
             # Convergence achieved
             timer_stop = time.perf_counter()
             return Response("SUCCESS",values_of_unknowns,round(timer_stop - timer_start,6),k+1,all_steps,"")

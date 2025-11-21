@@ -126,7 +126,7 @@ def forward_elimination_withoutPivoting(size, matrix, vector_of_sol,steps:List['
 
 # ! backward substitution
 def backward_substitution(size, matrix, vector_of_sol,steps:List['Steps']):
-    vector_of_unknowns = [None for _ in range(size)]
+    vector_of_unknowns = [None for _ in range(size)] 
     vector_of_unknowns[size - 1] = vector_of_sol[size - 1] / matrix[size - 1][size - 1]  # find value of last unknown
     addsteps(steps,f"X{size} = {vector_of_sol[size - 1]} / {matrix[size - 1][size - 1]} = {vector_of_unknowns[size - 1]}",matrix,vector_of_unknowns)
     for pivot in range(size - 2, -1, -1):
@@ -156,10 +156,11 @@ def check_diagonally_dominant(size,vector_of_sol ,matrix,steps:List['Steps']):
 def check_havesol(size,vector_of_sol,matrix,steps:List['Steps']) -> bool:
     has_zero_pivot=False
     for i in range(size):
-        if(matrix[i][i] == 0):
+        print(matrix[i][i],vector_of_sol[i])
+        if(matrix[i][i] == Decimal("0")):
             has_zero_pivot=True
             zero_pivot_row = i
-            if(vector_of_sol[i] != 0):
+            if(vector_of_sol[i] != Decimal("0")):
                 addsteps(steps,f"Fatal Error: R{i+1} results in 0 = {vector_of_sol[i]} System has no solution",matrix,vector_of_sol)
                 return "None"
     if has_zero_pivot:

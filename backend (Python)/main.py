@@ -30,7 +30,7 @@ def Naive_gauss_elimination(item: Item,all_steps:List['Steps']):
     if helper.forward_elimination_withoutPivoting(item.size, A_copy, B_copy,all_steps) == "error":
         end_time = time.perf_counter()
         return Response("Error",[],round(end_time-start_time,6),0,all_steps,"Singluar matrix or division by zero ")
-    status = helper.check_havesol(item.size,item.vector_of_sol,item.matrix,all_steps)
+    status = helper.check_havesol(item.size,B_copy,A_copy,all_steps)
     print(item.matrix)
     if(status != "unique"):
         end_time = time.perf_counter()
@@ -52,7 +52,7 @@ def Gauss_elimination_with_partial_pivoting(item: Item,all_steps:List['Steps']):
     if helper.forward_elimination_withPivoting(item.size, A_copy, B_copy,all_steps) == "error":
         end_time = time.perf_counter()
         return Response("Error",[],round(end_time-start_time,6),0,all_steps,"Singluar matrix")
-    status = helper.check_havesol(item.size,A_copy,B_copy,all_steps)
+    status = helper.check_havesol(item.size,B_copy,A_copy,all_steps)
     if(status != "unique"):
         end_time = time.perf_counter()
         if(status == "None"):
@@ -69,26 +69,27 @@ def Gauss_elimination_with_partial_pivoting_and_scaling(item: Item,all_steps:Lis
     A_copy = copy.deepcopy(item.matrix)
     B_copy = item.vector_of_sol[:]
     getcontext().prec = item.precision if item.precision is not None else 10
-    if helper.forward_elimination_withPivoting_and_scaling(item.size, item.matrix, item.vector_of_sol) == "error":
+    if helper.forward_elimination_withPivoting_and_scaling(item.size, A_copy, B_copy,all_steps) == "error":
        end_time = time.perf_counter()
        return Response("Error",[],round(end_time-start_time,6),0,all_steps,"Singluar matrix")
-    status = helper.check_havesol(item.size,item.vector_of_sol,item.matrix,all_steps)
+    status = helper.check_havesol(item.size,B_copy,A_copy,all_steps)
     if(status != "unique"):
         end_time = time.perf_counter()
         if(status == "None"):
             return Response("Error",[],round(end_time-start_time,6),0,all_steps,"the system has no solution")
         else:
             return Response("Error",[],round(end_time-start_time,6),0,all_steps,"the system has Infinite number of solution")
-    vector_of_unknowns = helper.backward_substitution(item.size, item.matrix, item.vector_of_sol)
+    vector_of_unknowns = helper.backward_substitution(item.size, A_copy, B_copy,all_steps)
+    end_time = time.perf_counter()
     return Response("SUCCESS",vector_of_unknowns,round(end_time - start_time,6),0,all_steps,"")
 
 # ! Gauss-Jordan elimination (with partial pivoting)
 def Gauss_Jordan_elimination(item: Item,all_steps:List['Steps']):
     getcontext().prec = item.precision if item.precision is not None else 10
-    error_status = helper.forward_elimination_withPivoting(item.size,item.matrix,item.vector_of_sol,Steps)
+    error_status = helper.forward_elimination_withPivoting(item.size,item.matrix,item.vector_of_sol,all_steps)
     if error_status == "error":
         return error_status
-    helper.backward_substitution(item.size,item.matrix,item.vector_of_sol,Steps)
+    helper.backward_substitution(item.size,item.matrix,item.vector_of_sol,all_steps)
     return item.vector_of_sol
 
 # ! Gauss-Seidel Method (without pivoting)

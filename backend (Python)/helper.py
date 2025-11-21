@@ -90,7 +90,7 @@ def forward_elimination_withPivoting(size, matrix, vector_of_sol,steps:List['Ste
             vector_of_sol[max_row_index] = dummy_b
             addsteps(steps,f"sawp R{pivot+1} with R{max_row_index+1}",matrix,vector_of_sol)
         else:
-            addsteps(steps,"there is no need for pivoting as the largest pivot is in the correct position")
+            addsteps(steps,"there is no need for pivoting as the largest pivot is in the correct position",matrix,vector_of_sol)
         # rup == rows under pivot <-- row
         for rup in range(pivot+1, size):
             # m == multiplier

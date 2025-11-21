@@ -21,25 +21,25 @@ def Map_to_Function(request_data : main.Item):
         Response = main.Naive_gauss_elimination(request_data,List_Steps)
         return Response
     if MethodId == "Gauss_elimination_Pivot":
-        Response = main.Gauss_elimination_with_partial_pivoting(request_data.matrix,List_Steps)
+        Response = main.Gauss_elimination_with_partial_pivoting(request_data,List_Steps)
         return Response
     if MethodId == "Gauss_elimination_Pivoting_Scaling":
-        Response = main.Gauss_elimination_with_partial_pivoting_and_scaling(request_data.matrix,List_Steps)
+        Response = main.Gauss_elimination_with_partial_pivoting_and_scaling(request_data,List_Steps)
         return Response
     if MethodId == "Gauss_Jordan":
-        Response = main.Gauss_Jordan_elimination(request_data.matrix,List_Steps)
+        Response = main.Gauss_Jordan_elimination(request_data,List_Steps)
         return Response
     if MethodId == "Gauss_Seidel":
-        Response = main.Gauss_Seidel_method(request_data.matrix,List_Steps)
+        Response = main.Gauss_Seidel_method(request_data,List_Steps)
         return Response
     if MethodId == "Jacobi":
-        Response = main.Jacobi_method(request_data.matrix,List_Steps)
+        Response = main.Jacobi_method(request_data,List_Steps)
         return Response
     if MethodId == "LU_decomposition_Doolittle":
-        Response = main.LU_decomposition_Doolittle_method(request_data.matrix,List_Steps)
+        Response = main.LU_decomposition_Doolittle_method(request_data,List_Steps)
         return Response
     if MethodId == "LU_decomposition_Cholesky":
-        Response = main.LU_decomposition_Cholesky_method(request_data.matrix,List_Steps)
+        Response = main.LU_decomposition_Cholesky_method(request_data,List_Steps)
         return Response
     return None
     

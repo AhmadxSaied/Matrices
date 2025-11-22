@@ -99,7 +99,8 @@ def forward_elimination_withPivoting(size, matrix, vector_of_sol,steps:List['Ste
             for eir in range(pivot, size):
                 matrix[rup][eir] = matrix[rup][eir] - m * matrix[pivot][eir]
             vector_of_sol[rup] = vector_of_sol[rup] - m * vector_of_sol[pivot]
-            addsteps(steps,f"R{rup+1} = R{rup+1}-({m}) * R{pivot+1} (Elimination)",matrix,vector_of_sol)
+            if(m != 0):
+                addsteps(steps,f"R{rup+1} = R{rup+1}-({m}) * R{pivot+1} (Elimination)",matrix,vector_of_sol)
     return None
 
 # ! forward elimination (without pivoting) & store multipliers
@@ -151,7 +152,7 @@ def check_diagonally_dominant(size,vector_of_sol ,matrix,steps:List['Steps']):
             return False
         if diag > row_sum:        # at least one strict dominance
             strictly_dominant = True
-    addsteps(steps,f"diagonally dominant {strictly_dominant}",matrix,vector_of_sol)
+    addsteps(steps,f"diagonally dominant -> {strictly_dominant}",matrix,vector_of_sol)
     return strictly_dominant
 def check_havesol(size,vector_of_sol,matrix,steps:List['Steps']) -> bool:
     has_zero_pivot=False
@@ -178,7 +179,8 @@ def backward_elimination(size,vector_of_sol,matrix,steps:List['Steps']):
             for eir in range(pivot,size):
                 matrix[rup][eir] -= m*matrix[pivot][eir]
             vector_of_sol[rup]-=m* vector_of_sol[pivot]
-            addsteps(steps,f"R{rup+1} = R{rup+1} - ({m}) * R{pivot+1}",matrix,vector_of_sol)
+            if(m != Decimal("0")):
+                addsteps(steps,f"R{rup+1} = R{rup+1} - ({m}) * R{pivot+1}",matrix,vector_of_sol)
 def normalize_matrix(size,vector_of_sol,matrix,steps:List['Steps']):
     for i in range(size):
         pivot_value = matrix[i][i]
@@ -186,7 +188,7 @@ def normalize_matrix(size,vector_of_sol,matrix,steps:List['Steps']):
         if pivot_value == 0:
             # If a zero pivot remains here, it means the system is singular.
             addsteps(steps, f"Error: Zero pivot detected at R{i+1} during normalization.", matrix, vector_of_sol)
-            return "errorr"
+            return "error"
 
         # Divide the entire row by the pivot value
         for j in range(i, size):

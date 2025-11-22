@@ -14,7 +14,7 @@ class Item(BaseModel):
     matrix: list[list[Decimal]]
     vector_of_sol: list[Decimal]
     initial_guess: list[Decimal] = []
-    max_iterations:int
+    max_iterations:int | None = 100
     Tolerance : Decimal | None = Decimal("1e-5")
 
 # +++++++++++++++++++++++++++++++++++++++++++++
@@ -85,15 +85,28 @@ def Gauss_elimination_with_partial_pivoting_and_scaling(item: Item,all_steps:Lis
 
 # ! Gauss-Jordan elimination (with partial pivoting)
 def Gauss_Jordan_elimination(item: Item,all_steps:List['Steps']):
+    start_time = time.perf_counter()
     getcontext().prec = item.precision if item.precision is not None else 10
     error_status = helper.forward_elimination_withPivoting(item.size,item.matrix,item.vector_of_sol,all_steps)
     if error_status == "error":
-        return error_status
-    helper.backward_substitution(item.size,item.matrix,item.vector_of_sol,all_steps)
-    return item.vector_of_sol
+        end_time = time.perf_counter()
+        return Response("Error",[],round(end_time-start_time,6),0,all_steps,"Singluar matrix")
+    status = helper.check_havesol(item.size, item.vector_of_sol, item.matrix, all_steps)
+    if (status != "unique"):
+        end_time = time.perf_counter()
+        if (status == "None"):
+            return Response("Error", [], round(end_time - start_time, 6), 0, all_steps, "the system has no solution")
+        else:
+            return Response("Error", [], round(end_time - start_time, 6), 0, all_steps,"the system has Infinite number of solution")
+    helper.normalize_matrix(item.size,item.vector_of_sol,item.matrix,all_steps)
+    helper.backward_elimination(item.size,item.vector_of_sol,item.matrix, all_steps)
+    item.vector_of_sol=helper.backward_substitution(item.size,item.matrix,item.vector_of_sol,all_steps)
+    end_time = time.perf_counter()
+    return Response("SUCCESS",item.vector_of_sol,round(end_time-start_time,6),0,all_steps,"")
 
 # ! Gauss-Seidel Method (without pivoting)
 def Gauss_Seidel_method(item: Item,all_steps:List['Steps']):
+    iterations=0
     timer_start = time.perf_counter()
     getcontext().prec = item.precision if item.precision is not None else 10
     values_of_unknowns = [Decimal(str(x)) for x in item.initial_guess]
@@ -103,8 +116,9 @@ def Gauss_Seidel_method(item: Item,all_steps:List['Steps']):
             timer_stop = time.perf_counter()
             addsteps(all_steps,"Cant use Gauss Seidel because the pivot is zero and we cant divide by zero",item.matrix,item.vector_of_sol)
             return Response("Error",item.vector_of_sol,round(timer_stop - timer_start,6),0,all_steps,"can't divide by zero")
-    is_diagonally_dominant = helper.check_diagonally_dominant(item.size,item.vector_of_sol,item.matrix,all_steps)
+    helper.check_diagonally_dominant(item.size,item.vector_of_sol,item.matrix,all_steps)
     for k in range(item.max_iterations):
+        iterations+=1
         previous_x = values_of_unknowns[:]
         for row in range(item.size):
             s = Decimal("0")  # s == sum
@@ -129,17 +143,21 @@ def Gauss_Seidel_method(item: Item,all_steps:List['Steps']):
             elif delta != 0:
                 # If the value is 0 but changed, we haven't converged
                 max_relative_error = Decimal("1")
-        addsteps(all_steps,f"Iteration {k+1}: Relative Error = {max_relative_error:.{item.precision}f}",item.matrix,values_of_unknowns)
-        if max_relative_error < item.tolerance:
+        vec_str = ", ".join([f"{x:.{item.precision}f}" for x in values_of_unknowns])
+
+                # Combine Vector + Error into one message
+        addsteps(all_steps,f"Iter {k + 1}: Vector=[{vec_str}] | Error={max_relative_error:.{item.precision}f}",item.matrix,values_of_unknowns)
+        if max_relative_error < item.Tolerance:
             # Convergence achieved
             timer_stop = time.perf_counter()
-            Response("SUCCESS",values_of_unknowns,round(timer_stop - timer_start,6),0,all_steps,"")
-        timer_stop=time.perf_counter()
+            return Response("SUCCESS",values_of_unknowns,round(timer_stop - timer_start,6),iterations,all_steps,"")
+    timer_stop=time.perf_counter()
     return Response("Error",values_of_unknowns,round(timer_stop-timer_start,6),item.max_iterations,all_steps,f"error: Did not converge within {item.max_iterations} iterations. Final error: {max_relative_error}") 
 
 # ! Jacobi Method (without pivoting)
 def Jacobi_method(item: Item,all_steps:List['Steps']):
     timer_start = time.perf_counter()
+    iteration=0
     getcontext().prec = item.precision if item.precision is not None else 10
     values_of_unknowns = item.initial_guess[:]
     # Check for zero pivots (diagonal elements) before starting
@@ -150,6 +168,7 @@ def Jacobi_method(item: Item,all_steps:List['Steps']):
             return Response("Error",item.vector_of_sol,round(timer_stop - timer_start,6),0,all_steps,"can't divide by zero")
 
     for k in range(item.max_iterations):
+        iteration +=1
         previous_x = values_of_unknowns[:]
         for row in range(item.size):
             s = Decimal("0")  # s == sum
@@ -174,16 +193,22 @@ def Jacobi_method(item: Item,all_steps:List['Steps']):
             elif delta != 0:
                 # If the value is 0 but changed, we haven't converged
                 max_relative_error = Decimal("1")
+        vec_str = ", ".join([f"{x:.{item.precision}f}" for x in values_of_unknowns])
+
+        # Combine Vector + Error into one message
+        addsteps(all_steps, f"Iter {k + 1}: Vector=[{vec_str}] | Error={max_relative_error:.{item.precision}f}",
+                 item.matrix, values_of_unknowns)
         if max_relative_error < item.Tolerance:
             # Convergence achieved
             timer_stop = time.perf_counter()
-            return Response("SUCCESS",values_of_unknowns,round(timer_stop - timer_start,6),k+1,all_steps,"")
-        timer_stop = time.perf_counter()
+            return Response("SUCCESS",values_of_unknowns,round(timer_stop - timer_start,6),iteration,all_steps,"")
+    timer_stop = time.perf_counter()
     return Response("Error",values_of_unknowns,round(timer_stop-timer_start,6),item.max_iterations,all_steps,f"error: Did not converge within {item.max_iterations} iterations. Final error: {max_relative_error}")
 
 # ! LU Decomposition Method (Doolittle's Method)
 def LU_decomposition_Doolittle_method(item: Item,all_steps:List['Steps']):
     getcontext().prec = item.precision if item.precision is not None else 10
+    timer_start = time.perf_counter()
     # Step 1: LU Decomposition (Doolittle's Method)
     L = [[Decimal("0") for _ in range(item.size)] for _ in range(item.size)]
     U = [[Decimal("0") for _ in range(item.size)] for _ in range(item.size)]
@@ -195,6 +220,7 @@ def LU_decomposition_Doolittle_method(item: Item,all_steps:List['Steps']):
             for k in range(i):
                 sum_u += L[i][k] * U[k][j]
             U[i][j] = item.matrix[i][j] - sum_u
+            addsteps(all_steps,f"U{i}{j} = A{i}{j} - {sum_u}",item.matrix,item.vector_of_sol,L,U)
         # Lower Triangular
         for j in range(i, item.size):
             if i == j:
@@ -204,30 +230,38 @@ def LU_decomposition_Doolittle_method(item: Item,all_steps:List['Steps']):
                 for k in range(i):
                     sum_l += L[j][k] * U[k][i]
                 if U[i][i] == 0:
-                    return "error"  # Singular matrix
+                    timer_end = time.perf_counter()
+                    return Response("ERROR",item.vector_of_sol,round(timer_end-timer_start,6),0,all_steps,"Singular matrix")  # Singular matrix
                 L[j][i] = (item.matrix[j][i] - sum_l) / U[i][i]
+                addsteps(all_steps,f"L{j}{i} = (A{j}{i} - {sum_l})/U{i}{i}",item.matrix,item.vector_of_sol,L,U)
 
     # Step 2: Solve Ly = b using forward substitution
+    addsteps(all_steps,"solving Ly=b using forward substitution",L,item.vector_of_sol,L,U)
     y = [Decimal("0") for _ in range(item.size)]
     for i in range(item.size):
         sum_y = Decimal("0")
         for j in range(i):
             sum_y += L[i][j] * y[j]
         y[i] = item.vector_of_sol[i] - sum_y
+        addsteps(all_steps,f"y{i} = b{i} - {sum_y}",item.matrix,y,L,U)
     # Step 3: Solve Ux = y using backward substitution
+    addsteps(all_steps,"solving Ux=y using backward substitution",U,y,L,U)
     x = [Decimal("0") for _ in range(item.size)]
     for i in range(item.size-1, -1, -1):
         sum_x = Decimal("0")
         for j in range(i+1, item.size):
             sum_x += U[i][j] * x[j]
         if U[i][i] == 0:
-            return "error"  # Singular matrix
+            timer_end = time.perf_counter()
+            return Response("ERROR",item.vector_of_sol,round(timer_end-timer_start,6),0,all_steps,"Singular matrix")
         x[i] = (y[i] - sum_x) / U[i][i]
-
-    return x
+        addsteps(all_steps,f"x{i} = (y{i} - {sum_x})/ U{i}{i}",U,x,L,U)
+    timer_stop = time.perf_counter()
+    return Response("SUCCESS",x,round(timer_stop-timer_start,6),item.max_iterations,all_steps,"")
 
 # ! LU Decomposition Method (Crout's Method)
 def LU_decomposition_Crout_method(item: Item,all_steps:List['Steps']):
+    timer_start = time.perf_counter()
     getcontext().prec = item.precision if item.precision is not None else 10
     # Step 1: LU Decomposition (Crout's Method)
     L = [[Decimal("0") for _ in range(item.size)] for _ in range(item.size)]
@@ -240,6 +274,7 @@ def LU_decomposition_Crout_method(item: Item,all_steps:List['Steps']):
             for k in range(i):
                 sum_l += L[j][k] * U[k][i]
             L[j][i] = item.matrix[j][i] - sum_l
+            addsteps(all_steps,f"L{j}{i} = A{j}{i} - {sum_l}",item.matrix,item.vector_of_sol,L,U)
         # Upper Triangular
         for j in range(i, item.size):
             if i == j:
@@ -249,27 +284,39 @@ def LU_decomposition_Crout_method(item: Item,all_steps:List['Steps']):
                 for k in range(i):
                     sum_u += L[i][k] * U[k][j]
                 if L[i][i] == 0:
-                    return "error"  # Singular matrix
+                    timer_end = time.perf_counter()
+                    return Response("ERROR",item.vector_of_sol,round(timer_end-timer_start,6),0,all_steps,"Singular matrix") # Singular matrix
                 U[i][j] = (item.matrix[i][j] - sum_u) / L[i][i]
+                addsteps(all_steps, f"U{i}{j} = (A{i}{j} - {sum_u})/L{i}{i}", item.matrix, item.vector_of_sol, L, U)
 
     # Step 2: Solve Ly = b using forward substitution
+    addsteps(all_steps,"solving Ly=b using forward substitution",L,item.vector_of_sol,L,U)
     y = [Decimal("0") for _ in range(item.size)]
     for i in range(item.size):
         sum_y = Decimal("0")
         for j in range(i):
             sum_y += L[i][j] * y[j]
-        y[i] = item.vector_of_sol[i] - sum_y
+        if L[i][i] == 0:
+            timer_end = time.perf_counter()
+            return Response("ERROR", item.vector_of_sol, round(timer_end - timer_start, 6), 0, all_steps,
+                            "Singular matrix (Pivot is zero)")
+        y[i] = (item.vector_of_sol[i] - sum_y)/L[i][i]
+        addsteps(all_steps,f"y{i} = b{i}-{sum_y}",L,y,L,U)
     # Step 3: Solve Ux = y using backward substitution
+    addsteps(all_steps, "solving Ux=y using forward substitution", L, item.vector_of_sol, L, U)
     x = [Decimal("0") for _ in range(item.size)]
     for i in range(item.size-1, -1, -1):
         sum_x = Decimal("0")
         for j in range(i+1, item.size):
             sum_x += U[i][j] * x[j]
         if U[i][i] == 0:
-            return "error"  # Singular matrix
+            timer_end = time.perf_counter()
+            return Response("ERROR", item.vector_of_sol, round(timer_end - timer_start, 6), 0, all_steps,
+                            "Singular matrix")  # Singular matrix
         x[i] = (y[i] - sum_x) / U[i][i]
-
-    return x
+        addsteps(all_steps, f"x{i} = (b{i}-{sum_x})/U{i}{i}", U, x, L, U)
+    timer_stop = time.perf_counter()
+    return Response("SUCCESS",x,round(timer_stop-timer_start,6),item.max_iterations,all_steps,"")
 
 # ! LU Decomposition Method (Cholesky's Method)
 def LU_decomposition_Cholesky_method(item: Item,all_steps:List['Steps']):

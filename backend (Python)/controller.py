@@ -41,6 +41,9 @@ def Map_to_Function(request_data : main.Item):
     if MethodId == "LU_decomposition_Cholesky":
         Response = main.LU_decomposition_Cholesky_method(request_data,List_Steps)
         return Response
+    if MethodId == "LU_decomposition_Croud":
+        Response = main.LU_decomposition_Crout_method(request_data,List_Steps)
+        return Response
     return None
     
         

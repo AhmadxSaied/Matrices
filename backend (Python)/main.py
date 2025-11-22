@@ -325,6 +325,7 @@ def LU_decomposition_Cholesky_method(item: Item,all_steps:List['Steps']):
     Requires matrix A to be symmetric and positive-definite.
     L is a lower triangular matrix.
     """
+    timer_start = time.perf_counter()
 
     L = [[Decimal("0") for _ in range(item.size)] for _ in range(item.size)]
 
@@ -346,7 +347,9 @@ def LU_decomposition_Cholesky_method(item: Item,all_steps:List['Steps']):
                 value = item.matrix[i][i] - sum_val
                 if value <= 0:
                     # Matrix is not positive definite
-                    return "error: Matrix is not positive-definite (Cholesky failed)"
+                    timer_end = time.perf_counter()
+                    addsteps(all_steps,f"check for positive defines A({i},{i}) - {sum_val} > 0 ?",item.matrix,item.vector_of_sol)
+                    return Response("ERROR",item.vector_of_sol,round(timer_end - timer_start,6),0,all_steps,"Matrix not positive definite")
 
                 # To maintain high precision with Decimal, we must import math.sqrt
                 # Since we don't know if math.sqrt is imported, we'll assume a Decimal-compatible sqrt is available
@@ -354,6 +357,7 @@ def LU_decomposition_Cholesky_method(item: Item,all_steps:List['Steps']):
                 try:
                     # Decimal objects have a .sqrt() method
                     L[i][i] = value.sqrt()
+                    addsteps(all_steps,f"L({i},{i} = √(A({i},{i} - {sum_val})))",item.matrix,item.vector_of_sol,L)
                 except AttributeError:
                     # Fallback if Decimal().sqrt() is not available (though it should be with Decimal)
                     return "error: Missing Decimal sqrt method"
@@ -362,9 +366,11 @@ def LU_decomposition_Cholesky_method(item: Item,all_steps:List['Steps']):
                 # Formula: L[i][j] = (A[i][j] - sum(L[i][k] * L[j][k])) / L[j][j]
 
                 if L[j][j] == 0:
-                    return "error: Zero diagonal element encountered"
+                    timer_end = time.perf_counter()
+                    return Response("ERROR",item.vector_of_sol,round(timer_end-timer_start,6),0,all_steps,"Zero diagonal element encountered")
 
                 L[i][j] = (item.matrix[i][j] - sum_val) / L[j][j]
+                addsteps(all_steps,f"L({i},{j}) = (A({i},{j}) - {sum_val})/L({j},{j})",L,item.vector_of_sol,L)
 
     # --- Step 2: Solve Ly = b using Forward Substitution ---
     # L is the lower triangular matrix
@@ -378,9 +384,12 @@ def LU_decomposition_Cholesky_method(item: Item,all_steps:List['Steps']):
         # Since L[i][i] is calculated and stored, we must divide by it here
         # (L[i][i] should never be zero for positive-definite matrices)
         if L[i][i] == 0:
-            return "error: L[i][i] zero during forward substitution"
+            timer_end = time.perf_counter()
+            addsteps(all_steps,"check for diagonals = zero",L,item.vector_of_sol,L)
+            return Response("ERROR",item.vector_of_sol,round(timer_end-timer_start,6),0,all_steps,f"L{i},{i} zero during forward substitution")
 
         y[i] = (item.vector_of_sol[i] - sum_y) / L[i][i]
+        addsteps(all_steps,f"y({i}) = (b({i}) - {sum_y})/L({i},{i})",L,y,L)
 
     # --- Step 3: Solve L^T x = y using Backward Substitution ---
     # L^T is the upper triangular matrix
@@ -394,8 +403,11 @@ def LU_decomposition_Cholesky_method(item: Item,all_steps:List['Steps']):
 
         # The pivot L^T[i][i] is L[i][i]
         if L[i][i] == 0:
-            return "error: L[i][i] zero during backward substitution"
+            timer_end = time.perf_counter()
+            addsteps(all_steps, "check for diagonals = zero", L, item.vector_of_sol, L)
+            return Response("ERROR",item.vector_of_sol,round(timer_end-timer_start,6),0,all_steps,f"L{i},{i} zero during forward substitution")
 
         x[i] = (y[i] - sum_x) / L[i][i]
-
-    return x
+        addsteps(all_steps, f"x({i}) = (y({i}) - {sum_x})/L({i},{i})", y, x, L)
+    timer_end = time.perf_counter()
+    return Response("SUCCESS",x,round(timer_end-timer_start,6),0,all_steps,"")

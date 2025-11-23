@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+<div class="solver-container">
+    
+
+
+    <!-- 1. Input Section -->
+    <div id="input-container">
+        <h1>Matrix Solver</h1>
+        <p>Enter Dimensions (N):</p>
+        <div class="controls" style="flex-direction: row; gap: 10px;">
+            <input  id = "ndim" class="puzzle-cell" type="number" [(ngModel)]="NumberEquations" 
+                  placeholder="N" min="1" 
+                  style="width: 80px; text-align: center; padding: 10px; border-radius: 10px; border: none;">
+            <button (click)="gridGenerator()">START</button>
+        </div>
+    </div>
+
+
+
+
+
+    <!-- 2. Matrix Input (Augmented Grid) -->
+    @if(isGenerated && !isSolved) {
+        <div id="display-container" style="display: block; margin-top: 20px;">
+            <h2>Enter Coefficients (A | B)</h2>
+            <div class="puzzle-grid" [style.grid-template-columns]="'repeat(' + (NumberEquations! + 1) + ', 1fr)'">
+                
+                @for(row of matrixA; track row; let i = $index) {
+                    <!-- Matrix A Columns -->
+                    @for(col of row; track col; let j = $index) {
+                        <input type="number" [(ngModel)]="matrixA[i][j]" 
+                        [ngModelOptions]="{updateOn: 'blur'}"
+                        class="puzzle-cell" inputmode="decimal" autocomplete="off" step="any"
+                        [class.invalid] = "showError && (matrixA[i][j] === null || matrixA[i][j] === undefined)"
+                        [class.valid] = "matrixA[i][j] != null || matrixA[i][j] != undefined"
+                        placeholder="A{{i+1}}{{j+1}}">
+                    }
+                    
+                    <!-- Matrix B Column (Last Column in the row) -->
+                    <input type="number" [(ngModel)]="matrixB[i]" 
+                            [ngModelOptions]="{updateOn: 'blur'}"
+                            class="puzzle-cell" inputmode="decimal" autocomplete="off" step="any"
+                            style="border-color: var(--primary-color);" 
+                        [class.invalid] = "showError && (matrixB[i] === null || matrixB[i] === undefined)"
+                        [class.valid] = "matrixB[i] != null || matrixB[i] != undefined"
+                            placeholder="B{{i+1}}">
+                }
+            </div>
+
+
+            <!-- 3. Method Selection & Solve -->
+            <div class="controls">
+                <select [(ngModel)]="selectedMethod">
+                    @for(m of methods; track m.id) {
+                        <option [value]="m.id">{{ m.name }}</option>
+                    }
+                </select>
+
+
+
+                <!-- Extra Params (Conditional) -->
+                @if(selectedMethod === 'LU') {
+                    <select [(ngModel)]="luForm">
+                        <option value="DOOLITTLE">Doolittle</option>
+                        <option value="CROUT">Crout</option>
+                        <option value="CHOLESKY">Cholesky</option>
+                    </select>
+                }
+
+                @if(selectedMethod === 'JACOBI' || selectedMethod === 'SEIDEL') {
+                    <div style="display: flex; gap: 5px;">
+                        <input type="number" [(ngModel)]="maxIterations" placeholder="Iter" style="width: 60px; padding: 8px; border-radius: 8px;">
+                        <input type="number" [(ngModel)]="tolerance" placeholder="Tol" style="width: 60px; padding: 8px; border-radius: 8px;">
+                    </div>
+                    <!-- Initial Guess Grid -->
+                    <p style="width: 100%; margin: 5px 0;">Initial Guess:</p>
+                    <div class="puzzle-grid" [style.grid-template-columns]="'repeat(' + NumberEquations + ', 1fr)'" style="margin: 5px 0; gap: 5px;">
+                        @for(g of initialGuess; track g; let i = $index) {
+                            <input type="number" [(ngModel)]="initialGuess[i]" class="puzzle-cell" style="font-size: 1rem;"
+                                [ngModelOptions]="{updateOn: 'blur'}" inputmode="decimal" autocomplete="off" step="any">
+                        }
+                    </div>
+                }
+
+                <button id="solve-button" (click)="solve()">SOLVE</button>
+            </div>
+        </div>
+    }
+
+
+
+
+
+
+
+    <!-- 4. Solution Player (Visualization) -->
+    @if(isSolved && solutionData) {
+        <div id="display-container" style="display: block;">
+            <h2>Solution Steps</h2>
+
+            <!-- Description Panel -->
+            <div class="results-panel" style="margin-bottom: 15px; text-align: center;">
+                <h3 style="color: var(--accent-color); margin: 0;">
+                    Step {{currentStepIndex }} / {{solutionData.steps.length-1}}
+                </h3>
+                <p style="color: white; margin-top: 10px;">
+                    {{ solutionData.steps[currentStepIndex].description }}
+                </p>
+                
+                <!-- Progress Bar -->
+                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 15px; overflow: hidden;">
+                    <div [style.width]="progressPercentage+'%'" 
+                      style="height: 100%; background: greenyellow; transition: width 0.3s ease;">
+                    </div>
+                </div>
+            </div>
+
+
+
+
+            <!-- The Animated Grid -->
+            <div class="puzzle-grid" [style.grid-template-columns]="'repeat(' + (NumberEquations! + 1) + ', 1fr)'">
+                @for(row of currentMatrixADisplay; track row; let i = $index) {
+                    @for(val of row; track val; let j = $index) {
+                        <div class="puzzle-cell" 
+                            [ngStyle]="getCellStyle(i, j)"
+                            style="display: flex; align-items: center; justify-content: center; cursor: default;">
+                            {{ val | number:'1.0-2' }}
+                        </div>
+                    }
+                        <div class="puzzle-cell" 
+                            [ngStyle]="getCellStyle(i, currentMatrixADisplay[0].length)"
+                            style="display: flex; align-items: center; justify-content: center; cursor: default;">
+                            {{ currentMatrixBDisplay[i] | number:'1.0-2' }}
+                        </div>
+                }
+            </div>
+
+
+
+
+
+            <!-- Player Controls -->
+            <div class="controls" style="flex-direction: row; margin-top: 20px;">
+                <button (click)="prevStep()" [disabled]="currentStepIndex === 0" style="background: var(--tile-bg);">
+                    &lt; Prev
+                </button>
+                
+                <button (click)="nextStep()" [disabled]="currentStepIndex === solutionData.steps.length - 1">
+                    Next &gt;
+                </button>
+            </div>
+            
+            <!-- Reset -->
+            <button id="reset-button" (click)="isSolved = false" style="margin-top: 20px; ;">New Problem</button>
+        </div>
+    }
+
+</div>
+</body>
+</html>

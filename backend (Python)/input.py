@@ -11,3 +11,4 @@ class Input(BaseModel):
     size: int
     vector_of_sol: list[Decimal]
     initial_guess: list[Decimal] = []
+    Tolerance:int |None= Decimal("1e-6")

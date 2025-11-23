@@ -90,7 +90,7 @@ def forward_elimination_withPivoting(size, matrix, vector_of_sol,steps:List['Ste
             vector_of_sol[max_row_index] = dummy_b
             addsteps(steps,f"sawp R{pivot+1} with R{max_row_index+1}",matrix,vector_of_sol)
         else:
-            addsteps(steps,"there is no need for pivoting as the largest pivot is in the correct position")
+            addsteps(steps,"there is no need for pivoting as the largest pivot is in the correct position",matrix,vector_of_sol)
         # rup == rows under pivot <-- row
         for rup in range(pivot+1, size):
             # m == multiplier
@@ -99,7 +99,8 @@ def forward_elimination_withPivoting(size, matrix, vector_of_sol,steps:List['Ste
             for eir in range(pivot, size):
                 matrix[rup][eir] = matrix[rup][eir] - m * matrix[pivot][eir]
             vector_of_sol[rup] = vector_of_sol[rup] - m * vector_of_sol[pivot]
-            addsteps(steps,f"R{rup+1} = R{rup+1}-({m}) * R{pivot+1} (Elimination)",matrix,vector_of_sol)
+            if(m != 0):
+                addsteps(steps,f"R{rup+1} = R{rup+1}-({m}) * R{pivot+1} (Elimination)",matrix,vector_of_sol)
     return None
 
 # ! forward elimination (without pivoting) & store multipliers
@@ -126,7 +127,7 @@ def forward_elimination_withoutPivoting(size, matrix, vector_of_sol,steps:List['
 
 # ! backward substitution
 def backward_substitution(size, matrix, vector_of_sol,steps:List['Steps']):
-    vector_of_unknowns = [None for _ in range(size)]
+    vector_of_unknowns = [None for _ in range(size)] 
     vector_of_unknowns[size - 1] = vector_of_sol[size - 1] / matrix[size - 1][size - 1]  # find value of last unknown
     addsteps(steps,f"X{size} = {vector_of_sol[size - 1]} / {matrix[size - 1][size - 1]} = {vector_of_unknowns[size - 1]}",matrix,vector_of_unknowns)
     for pivot in range(size - 2, -1, -1):
@@ -151,15 +152,16 @@ def check_diagonally_dominant(size,vector_of_sol ,matrix,steps:List['Steps']):
             return False
         if diag > row_sum:        # at least one strict dominance
             strictly_dominant = True
-    addsteps(steps,f"diagonally dominant {strictly_dominant}",matrix,vector_of_sol)
+    addsteps(steps,f"diagonally dominant -> {strictly_dominant}",matrix,vector_of_sol)
     return strictly_dominant
 def check_havesol(size,vector_of_sol,matrix,steps:List['Steps']) -> bool:
     has_zero_pivot=False
     for i in range(size):
-        if(matrix[i][i] == 0):
+        print(matrix[i][i],vector_of_sol[i])
+        if(matrix[i][i] == Decimal("0")):
             has_zero_pivot=True
             zero_pivot_row = i
-            if(vector_of_sol[i] != 0):
+            if(vector_of_sol[i] != Decimal("0")):
                 addsteps(steps,f"Fatal Error: R{i+1} results in 0 = {vector_of_sol[i]} System has no solution",matrix,vector_of_sol)
                 return "None"
     if has_zero_pivot:
@@ -177,7 +179,8 @@ def backward_elimination(size,vector_of_sol,matrix,steps:List['Steps']):
             for eir in range(pivot,size):
                 matrix[rup][eir] -= m*matrix[pivot][eir]
             vector_of_sol[rup]-=m* vector_of_sol[pivot]
-            addsteps(steps,f"R{rup+1} = R{rup+1} - ({m}) * R{pivot+1}",matrix,vector_of_sol)
+            if(m != Decimal("0")):
+                addsteps(steps,f"R{rup+1} = R{rup+1} - ({m}) * R{pivot+1}",matrix,vector_of_sol)
 def normalize_matrix(size,vector_of_sol,matrix,steps:List['Steps']):
     for i in range(size):
         pivot_value = matrix[i][i]
@@ -185,7 +188,7 @@ def normalize_matrix(size,vector_of_sol,matrix,steps:List['Steps']):
         if pivot_value == 0:
             # If a zero pivot remains here, it means the system is singular.
             addsteps(steps, f"Error: Zero pivot detected at R{i+1} during normalization.", matrix, vector_of_sol)
-            return "errorr"
+            return "error"
 
         # Divide the entire row by the pivot value
         for j in range(i, size):

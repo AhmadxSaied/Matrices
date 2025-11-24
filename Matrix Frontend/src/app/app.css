@@ -92,7 +92,7 @@ p {
     border: 2px solid var(--border-color);
     border-radius: 12px;
     color: var(--text-color);
-    font-size: clamp(1.2rem, 3vw, 2.5rem); /* ثابتة لكن تصغر قليلاً للشاشات الصغيرة */
+    font-size: clamp(1.2rem, 2vw, 2.5rem); /* ثابتة لكن تصغر قليلاً للشاشات الصغيرة */
     font-weight: bold;
     text-align: center;
     transition: box-shadow 0.25s ease, border-color 0.25s ease;
@@ -101,7 +101,10 @@ p {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-
+.puzzle-cell:hover {
+    box-shadow: 0 0 20px var(--accent-color);
+    transform: translateY(-2px);
+}
 .puzzle-cell:focus {
     outline: none;
     border-color: var(--success-color);
@@ -329,7 +332,7 @@ select {
 
 @media (min-width: 1200px) {
     .solver-container {
-        width: 25vw;
+        width: 55vw;
         max-width: none;
     }
 }
@@ -367,4 +370,120 @@ select {
     max-width: 720px;
     width: 100%;
     margin: 0 auto;
+}
+.extra-options{
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+}
+.puzzle-grid2{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+
+}
+.puzzle-cell2{
+    max-width: 60px;
+    min-height: 30px;
+    color: var(--text-muted);
+    background: var(--tile-bg);
+    border-radius: 5px;
+}
+.puzzle-cell2:hover,.extra-options-seidel:hover{
+ border: 2px solid var(--accent-color);
+    box-shadow: 0 0 10px var(--accent-color);
+}
+.puzzle-cell2:focus,.extra-options-seidel:focus{
+    border: 2px solid var(--accent-color);
+    box-shadow: 0 0 10px var(--accent-color);
+    outline: none;
+}
+.select-method{
+    width: 150px;
+}
+span{
+    color: var(--text-muted);
+}
+.extra-options-seidel{
+    width: 60px; padding: 8px; border-radius: 8px;
+    max-width: 60px;
+    min-height: 30px;
+    color: var(--text-muted);
+    background: var(--tile-bg);
+    margin-top: 15px;
+}
+.results-values{
+    width: 100%;
+    padding:5px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-evenly;
+}
+.results-values span{
+    padding: 10px;
+}
+.table-container {
+    display: flex;
+    overflow-x: auto;
+    width: 100%;
+    background-color: inherit ;
+    margin-top: 20px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+}
+.table{
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.table th,.table td {
+    padding: 10px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+
+}
+.col{
+    position: sticky;
+    left: 0;
+    background-color: var(--tile-bg);
+    z-index: 5;
+    border-right: 1px solid var(--border-color);
+}
+.equations-container {
+    margin-top: 20px;
+    background: inherit;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+.equations-list{
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+}
+.equations-container h3 {
+    margin-top: 0;
+    color: #F9F9F9;
+    font-size: 1.1rem;
+    border-bottom: 2px solid var(--accent-color); /* Your purple color */
+    display: inline-block;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.equation-row {
+    font-family: 'Times New Roman', serif; /* Looks like real math */
+    font-size: 1.3rem; /* Make it large and readable */
+    margin-bottom: 12px;
+    padding: 10px;
+    background-color: inherit;
+    border-radius: 6px;
+    border-left: 4px solid var(--accent-color); /* Adds a nice colored bar on the left */
 }

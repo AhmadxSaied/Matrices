@@ -38,7 +38,7 @@
                         class="puzzle-cell" inputmode="decimal" autocomplete="off" step="any"
                         [class.invalid] = "showError && (matrixA[i][j] === null || matrixA[i][j] === undefined)"
                         [class.valid] = "matrixA[i][j] != null || matrixA[i][j] != undefined"
-                        placeholder="A{{i+1}}{{j+1}}">
+                        placeholder="A({{i+1}})({{j+1}})">
                     }
                     
                     <!-- Matrix B Column (Last Column in the row) -->
@@ -55,7 +55,7 @@
 
             <!-- 3. Method Selection & Solve -->
             <div class="controls">
-                <select [(ngModel)]="selectedMethod">
+                <select [(ngModel)]="selectedMethod" class="select-method">
                     @for(m of methods; track m.id) {
                         <option [value]="m.id">{{ m.name }}</option>
                     }
@@ -74,15 +74,21 @@
 
                 @if(selectedMethod === 'JACOBI' || selectedMethod === 'SEIDEL') {
                     <div style="display: flex; gap: 5px;">
-                        <input type="number" [(ngModel)]="maxIterations" placeholder="Iter" style="width: 60px; padding: 8px; border-radius: 8px;">
-                        <input type="number" [(ngModel)]="tolerance" placeholder="Tol" style="width: 60px; padding: 8px; border-radius: 8px;">
+                        <div class="extra-options">
+                            <input type="number" class="extra-options-seidel" [(ngModel)]="maxIterations" placeholder="Iter">
+                            <span>Iterations</span>
+                        </div>
+                        <div class="extra-options">
+                            <input type="number" [(ngModel)]="tolerance" placeholder="Tol" class="extra-options-seidel">
+                            <span>Tolerance</span>
+                        </div>
                     </div>
                     <!-- Initial Guess Grid -->
                     <p style="width: 100%; margin: 5px 0;">Initial Guess:</p>
-                    <div class="puzzle-grid" [style.grid-template-columns]="'repeat(' + NumberEquations + ', 1fr)'" style="margin: 5px 0; gap: 5px;">
+                    <div class="puzzle-grid2" [style.grid-template-columns]="'repeat(' + NumberEquations + ', 1fr)'" style="margin: 5px 0; gap: 5px;">
                         @for(g of initialGuess; track g; let i = $index) {
-                            <input type="number" [(ngModel)]="initialGuess[i]" class="puzzle-cell" style="font-size: 1rem;"
-                                [ngModelOptions]="{updateOn: 'blur'}" inputmode="decimal" autocomplete="off" step="any">
+                            <input type="number" [(ngModel)]="initialGuess[i]" class="puzzle-cell2" style="font-size: 1rem;"
+                                [ngModelOptions]="{updateOn: 'blur'}" inputmode="decimal" autocomplete="off" step="any" placeholder="0">
                         }
                     </div>
                 }
@@ -101,6 +107,8 @@
     <!-- 4. Solution Player (Visualization) -->
     @if(isSolved && solutionData) {
         <div id="display-container" style="display: block;">
+        @if(selectedMethod == "GAUSS"){
+
             <h2>Solution Steps</h2>
 
             <!-- Description Panel -->
@@ -120,9 +128,6 @@
                 </div>
             </div>
 
-
-
-
             <!-- The Animated Grid -->
             <div class="puzzle-grid" [style.grid-template-columns]="'repeat(' + (NumberEquations! + 1) + ', 1fr)'">
                 @for(row of currentMatrixADisplay; track row; let i = $index) {
@@ -140,18 +145,83 @@
                         </div>
                 }
             </div>
+            @if(currentStepIndex == solutionData.steps.length-1){
+            <div class="results-values">
+                <span>X3 = {{solutionData.results[2]}}</span>
+                <span>X2 = {{solutionData.results[1]}}</span>
+                <span>X1 = {{solutionData.results[0]}} </span>
+            </div>
+            }
+            }
+            @if(selectedMethod == "SEIDEL" || selectedMethod == "JACOBI"){
+                <div class="puzzle-grid" [style.grid-template-columns]="'repeat(' + (NumberEquations! + 1) + ', 1fr)'">
+                    @for(row of currentMatrixADisplay; track row; let i = $index) {
+                        @for(val of row; track val; let j = $index) {
+                            <div class="puzzle-cell"
+                                 style="display: flex; align-items: center; justify-content: center; cursor: default;">
+                                {{ val | number:'1.0-2' }}
+                            </div>
+                        }
+                        <div class="puzzle-cell"
+                             [ngStyle]="getCellStyle(i, currentMatrixADisplay[0].length)"
+                             style="display: flex; align-items: center; justify-content: center; cursor: default;">
+                            {{ currentMatrixBDisplay[i] | number:'1.0-2' }}
+                        </div>
+                    }
+                </div>
+                <div class="equations-container" *ngIf="solutionData">
+                    <h3>Iteration Equations</h3>
 
+                    <div class="equations-list">
+                        @for (eq of solutionData.equations; track $index) {
+                            <div class="equation-row">
+                                {{ eq }}
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="table-container">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th class="col">Iteration (k)</th>
+                        @for(iter of solutionData.steps;track iter.stepNumber){
+                            <th>{{iter.stepNumber}}</th>
+                        }
+                    </tr>
+                    </thead>
 
-
-
+                    <tbody>
+                        @for (dummy of [].constructor(NumberEquations); track $index;let xIndex = $index){
+                            <tr>
+                                <th class="col">X<sub>{{xIndex+1}}</sub></th>
+                                @for (iteration of solutionData.steps;track iteration.stepNumber ){
+                                    <td>
+                                        {{iteration.currentMatrixB[xIndex]}}
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                </div>
+                    <div class="results-values">
+                        <span>X3 = {{solutionData.results[2]}}</span>
+                        <span>X2 = {{solutionData.results[1]}}</span>
+                        <span>X1 = {{solutionData.results[0]}} </span>
+                        <span>Execution Time = {{solutionData.executionTime}} </span>
+                        <span>Total Iteration = {{solutionData.totalIterations}}</span>
+                        <span>{{solutionData.steps[0].description}}</span>
+                    </div>
+            }
 
             <!-- Player Controls -->
             <div class="controls" style="flex-direction: row; margin-top: 20px;">
-                <button (click)="prevStep()" [disabled]="currentStepIndex === 0" style="background: var(--tile-bg);">
+                <button (click)="prevStep()" [disabled]="currentStepIndex === 0" [hidden]="selectedMethod === 'SEIDEL'|| selectedMethod === 'JACOBI' " style="background: var(--tile-bg);">
                     &lt; Prev
                 </button>
                 
-                <button (click)="nextStep()" [disabled]="currentStepIndex === solutionData.steps.length - 1">
+                <button (click)="nextStep()" [disabled]="currentStepIndex === solutionData.steps.length - 1" [hidden]="selectedMethod === 'SEIDEL'|| selectedMethod === 'JACOBI' ">
                     Next &gt;
                 </button>
             </div>

@@ -8,7 +8,7 @@ interface MatrixStep {
   currentMatrixA: number[][];
   currentMatrixB : number[];
   pivotIndex?: { r: number, c: number }; 
-  highlightRow?: number; 
+  highlightRow?: number;
 }
 
 interface SolutionResponse {
@@ -18,6 +18,7 @@ interface SolutionResponse {
   totalIterations : number;
   steps: MatrixStep[];
   errorMessage : null
+  equations?: string[];
 }
 
 @Component({
@@ -52,7 +53,7 @@ export class App {
 
   //Method Parameters
   luForm: string = 'DOOLITTLE';
-  initialGuess: number[] = [];
+  initialGuess = new Array(this.NumberEquations).fill(0);
   maxIterations: number = 50;
   tolerance: number = 0.0001;
 
@@ -123,9 +124,10 @@ export class App {
 
     this.solutionData = {
       status: "SUCCESS",
-      results: [1, 2, 3],
+      results: [2, 5, 6],
       executionTime: 5 ,
-      totalIterations : 3,
+      totalIterations : 6,
+      equations:["x1 = x2/3","x2 = x3/3","x3 = x1/x2"],
       steps: [
         {
             stepNumber: 1,
@@ -164,6 +166,12 @@ export class App {
             currentMatrixB : [1,1,2],
             pivotIndex: { r: 1, c: 1 },
             highlightRow : 2
+        },
+        {
+          stepNumber:6,
+          description:"x3 = 2/-4 = -0.5",
+          currentMatrixA:[[2,1,4],[0,1.5,1],[0,0,1]],
+          currentMatrixB : [1,1,-0.5],
         },
       ],
       errorMessage:null

@@ -23,6 +23,7 @@ class Response:
     errorMessage:str
     L:List[List[Decimal]] | None = None
     U:List[List[Decimal]] | None =None
+    equations:List[str] | None = None
 
 def addsteps(
         all_steps:List['Steps'],

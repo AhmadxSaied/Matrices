@@ -109,6 +109,8 @@ def Gauss_Jordan_elimination(item: Item,all_steps:List['Steps']):
 # ! Gauss-Seidel Method (without pivoting)
 def Gauss_Seidel_method(item: Item,all_steps:List['Steps']):
     iterations=0
+    equa = []
+
     timer_start = time.perf_counter()
     getcontext().prec = item.precision if item.precision is not None else 10
     values_of_unknowns = [Decimal(str(x)) for x in item.initial_guess]
@@ -119,6 +121,18 @@ def Gauss_Seidel_method(item: Item,all_steps:List['Steps']):
             addsteps(all_steps,"Cant use Gauss Seidel because the pivot is zero and we cant divide by zero",item.matrix,item.vector_of_sol)
             return Response("Error",item.vector_of_sol,round(timer_stop - timer_start,6),0,all_steps,"can't divide by zero")
     helper.check_diagonally_dominant(item.size,item.vector_of_sol,item.matrix,all_steps)
+    for i in range(item.size):
+        current = f'X{i+1} = ({item.vector_of_sol[i]}'
+        for j in range(item.size):
+            if i!=j:
+                value = item.matrix[i][j]
+                status = "(old)"
+                if j<i:
+                    status = "(new)"
+                current += f"-{value}X{j+1}<sup>{status}</sup>"
+        current += f" ) / {item.matrix[i][i]}"
+
+        equa.append(current)
     for k in range(item.max_iterations):
         iterations+=1
         previous_x = values_of_unknowns[:]
@@ -127,6 +141,7 @@ def Gauss_Seidel_method(item: Item,all_steps:List['Steps']):
             for col in range(item.size):
                 if col != row:
                     s += values_of_unknowns[col] * item.matrix[row][col]
+
             values_of_unknowns[row] = (
                 item.vector_of_sol[row] - s) / item.matrix[row][row]
         # --- Check for Convergence ---
@@ -152,14 +167,15 @@ def Gauss_Seidel_method(item: Item,all_steps:List['Steps']):
         if max_relative_error < item.Tolerance:
             # Convergence achieved
             timer_stop = time.perf_counter()
-            return Response("SUCCESS",values_of_unknowns,round(timer_stop - timer_start,6),iterations,all_steps,"")
+            return Response("SUCCESS",values_of_unknowns,round(timer_stop - timer_start,6),iterations,all_steps,"",equations=equa)
     timer_stop=time.perf_counter()
-    return Response("Error",values_of_unknowns,round(timer_stop-timer_start,6),item.max_iterations,all_steps,f"error: Did not converge within {item.max_iterations} iterations. Final error: {max_relative_error}") 
+    return Response("Error",values_of_unknowns,round(timer_stop-timer_start,6),item.max_iterations,all_steps,f"error: Did not converge within {item.max_iterations} iterations. Final error: {max_relative_error}",equations=equa)
 
 # ! Jacobi Method (without pivoting)
 def Jacobi_method(item: Item,all_steps:List['Steps']):
     timer_start = time.perf_counter()
     iteration=0
+    equa=[]
     getcontext().prec = item.precision if item.precision is not None else 10
     values_of_unknowns = item.initial_guess[:]
     # Check for zero pivots (diagonal elements) before starting
@@ -168,7 +184,16 @@ def Jacobi_method(item: Item,all_steps:List['Steps']):
             timer_stop = time.perf_counter()
             addsteps(all_steps,"Cant use Gauss Seidel because the pivot is zero and we cant divide by zero",item.matrix,item.vector_of_sol)
             return Response("Error",item.vector_of_sol,round(timer_stop - timer_start,6),0,all_steps,"can't divide by zero")
+    for i in range(item.size):
+        current = f'X{i+1} = ({item.vector_of_sol[i]}'
+        for j in range(item.size):
+            if i!=j:
+                value = item.matrix[i][j]
+                status = "(old)"
+                current += f"-{value}X{j+1}<sup>{status}</sup>"
+        current += f" ) / {item.matrix[i][i]}"
 
+        equa.append(current)
     for k in range(item.max_iterations):
         iteration +=1
         previous_x = values_of_unknowns[:]

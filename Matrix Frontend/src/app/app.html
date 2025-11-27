@@ -58,26 +58,9 @@
                     </select>
                 }
 
-                @if(selectedMethod === 'JACOBI' || selectedMethod === 'Gauss_Seidel') {
-                    <div style="display: flex; gap: 5px;">
-                        <div class="extra-options">
-                            <input type="number" class="extra-options-seidel" [(ngModel)]="maxIterations" placeholder="Iter">
-                            <span>Iterations</span>
-                        </div>
-                        <div class="extra-options">
-                            <input type="number" [(ngModel)]="tolerance" placeholder="Tol" class="extra-options-seidel">
-                            <span>Tolerance</span>
-                        </div>
-                    </div>
-                    <p style="width: 100%; margin: 5px 0;">Initial Guess:</p>
-                    <div class="puzzle-grid2" [style.grid-template-columns]="'repeat(' + NumberEquations + ', 1fr)'" style="margin: 5px 0; gap: 5px;">
-                        @for(g of initialGuess; track g; let i = $index) {
-                            <input type="number" [(ngModel)]="initialGuess[i]" class="puzzle-cell2" style="font-size: 1rem;"
-                                [ngModelOptions]="{updateOn: 'blur'}" inputmode="decimal" autocomplete="off" step="any" placeholder="0">
-                        }
-                    </div>
-                }
 
+
+                <button id="extra-details" (click)="show=true">Details</button>
                 <button id="solve-button" (click)="solve()">SOLVE</button>
             </div>
         </div>
@@ -87,8 +70,12 @@
     @if(isSolved && solutionData) {
         
         <div id="results-dashboard" class="animate-up">
-            <h1><span style="color:var(--success-color)">✔</span> Solution Found</h1>
-            
+            @if (solutionData.errorMessage ){
+                <h1><span style="color:var(--error-color)">⨯</span> Solution not Found</h1>
+            } @else {
+                <h1><span style="color:var(--success-color)">✔</span> Solution Found</h1>
+            }
+
             <div class="metrics-container">
                 <div class="metric-card">
                     <span class="label">Time</span>
@@ -100,7 +87,11 @@
                 </div>
                 <div class="metric-card">
                     <span class="label">Status</span>
-                    <span class="value" style="color: var(--success-color)">Optimal</span>
+                    @if (solutionData.errorMessage){
+                        <span class="value" style="color: var(--error-color)">Didnt Converge</span>
+                    } @else {
+                        <span class="value" style="color: var(--success-color)">Optimal</span>
+                    }
                 </div>
             </div>
 
@@ -160,7 +151,7 @@
                         Show Detailed Steps
                     </button>
                 }
-                <button (click)="isSolved = false" style="background: transparent; border: 1px solid var(--border-color);">
+                <button (click)="isSolved = false" style="background: transparent; border: 1px solid var(--border-color); color: white">
                     New Problem
                 </button>
             </div>
@@ -224,8 +215,7 @@
 
                             <div class="equations-list">
                                 @for (eq of solutionData.equations; track $index) {
-                                    <div class="equation-row">
-                                        {{ eq }}
+                                    <div class="equation-row" [innerHTML]="eq">
                                     </div>
                                 }
                             </div>
@@ -266,6 +256,45 @@
         }
     }
 
+</div>
+<div class="popup" [class.show]="show">
+    <div class="popup-menu">
+        <div class="popup-controlls">
+            <p>Presicion</p>
+            <input [defaultValue]="10" [(ngModel)]="precision">
+        </div>
+        @if (selectedMethod == 'JACOBI' || selectedMethod == 'Gauss_Seidel' ){
+            <div class="popup-controlls">
+                <span>Tolerance</span>
+                <input  [defaultValue]="0.000001" [(ngModel)]="tolerance" >
+            </div>
+            <div class="popup-controlls">
+                <span>Iterations</span>
+                <input [(ngModel)]="maxIterations">
+            </div>
+        <div class="initial-guess">
+            @for (item of [].constructor(NumberEquations) ; track $index){
+                <div class="popup-controlls">
+                <span>Initial Guess X{{$index+1}}</span>
+                    <input [(ngModel)]="initialGuess[$index]">
+                </div>
+            }
+        </div>
+        }
+        @if (selectedMethod == 'Gauss_elimination') {
+            <div class="popup-controlls">
+                <span>Pivoting</span>
+            <input type="checkbox" [(ngModel)]="withpivoting">
+            </div>
+            <div class="popup-controlls">
+                <span>Pivoting & scaling</span>
+                <input type="checkbox" [(ngModel)]="withscaling">
+            </div>
+        }
+        <div class="continuebtn">
+        <button (click)="show=false">Continue</button>
+        </div>
+    </div>
 </div>
 </body>
 </html>

@@ -22,6 +22,8 @@ interface SolutionResponse {
   steps: MatrixStep[];
   errorMessage : string | null;
   equations?: string[];
+  L?: number[][];
+  U?: number[][];
 }
 
 @Component({
@@ -39,24 +41,24 @@ export class App {
   
   matrixA: number[][] = [];
   matrixB: number[] = [];
-  
+  precision: number = 10;
   isGenerated: boolean = false;
   isSolved: boolean = false;
   showError : boolean = false;
   showSteps: boolean = false; 
-
+  withpivoting: boolean = false;
+  withscaling: boolean = false;
+  show:boolean = false;
   currentMatrixL: number[][] | null = null;
   currentMatrixU: number[][] | null = null;
-
   selectedMethod: string = 'Naive_Gauss';
   methods = [
     { id: 'Naive_Gauss', name: 'Naive Gauss Elimination' },
-    { id: 'Gauss_elimination_Pivot', name: 'Gauss Partial Pivoting' },
-    { id: 'Gauss_elimination_Pivoting_Scaling', name: 'Gauss Pivoting & Scaling' },
+    {id:'Gauss_elimination',name: 'Gauss Elimination' },
     { id: 'Gauss_Jordan', name: 'Gauss-Jordan' },
     { id: 'LU', name: 'LU Decomposition' },
     { id: 'JACOBI', name: 'Jacobi Iteration' },
-    { id: 'Gauss_Seidel', name: 'Gauss-Seidel' }
+    { id: 'Gauss_Seidel', name: 'Gauss-Seidel' },
   ];
 
   luForm: string = 'DOOLITTLE';
@@ -133,10 +135,21 @@ export class App {
     } else if (this.selectedMethod === 'Gauss_Seidel') { 
         finalMethodID = 'Gauss_Seidel';
     }
+    else{
+      if(this.withscaling){
+        finalMethodID = 'Gauss_elimination_Pivoting_Scaling';
+      }
+      else if(this.withpivoting){
+        finalMethodID ='Gauss_elimination_Pivoting';
+      }
+      else{
+        finalMethodID ='Naive_Gauss';
+      }
+    }
 
     const payload = {
       MethodId: finalMethodID,
-      precision: 10,
+      precision: this.precision,
       size: this.NumberEquations,
       matrix: this.matrixA,
       vector_of_sol: this.matrixB,
@@ -148,12 +161,20 @@ export class App {
 
     console.log("Sending Payload:", payload);
 
-    this.http.post<SolutionResponse>('http://localhost:8000/solve', payload)
+    this.http.post<SolutionResponse>('http://127.0.0.1:8000/solve', payload)
       .subscribe({
         next: (response) => {
+          if(this.selectedMethod !== 'JACOBI' && this.selectedMethod !== 'Gauss_Seidel') {
           if (response.errorMessage) {
             alert("Solver Error: " + response.errorMessage);
             return;
+          }
+          }
+          else{
+            if (response.errorMessage === 'can\'t divide by zero') {
+              alert("Solver Error: " + response.errorMessage);
+              return;
+            }
           }
           this.solutionData = response;
           this.isSolved = true;
@@ -192,8 +213,8 @@ export class App {
       const step = this.solutionData.steps[this.currentStepIndex];
       this.currentMatrixADisplay = step.matrixA;
       this.currentMatrixBDisplay = step.matrixB;
-      this.currentMatrixL = step.L || null;
-      this.currentMatrixU = step.U || null;
+      this.currentMatrixL = this.solutionData.L || null;
+      this.currentMatrixU = this.solutionData.U || null;
     }
   }
 

@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import main
+
 origin=["http://localhost:4200"]
 methods=["Gauss_"]
 app = FastAPI()
@@ -11,9 +12,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origin,
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods (POST, GET, etc.)
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
+
 def Map_to_Function(request_data : main.Item):
     MethodId = request_data.MethodId
     List_Steps = []
@@ -46,7 +48,6 @@ def Map_to_Function(request_data : main.Item):
         return Response
     return None
     
-        
 @app.post("/solve")
 async def slove_matrix(request_data: main.Item) -> Response:
     Response = Map_to_Function(request_data=request_data)

@@ -1,23 +1,27 @@
-import { Component, ViewEncapsulation } from '@angular/core';
+import { Component, ViewEncapsulation, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 
 interface MatrixStep {
   stepNumber: number;
   description: string;
-  currentMatrixA: number[][];
-  currentMatrixB : number[];
+  matrixA: number[][]; 
+  matrixB : number[];
+  L?: number[][];
+  U?: number[][];
   pivotIndex?: { r: number, c: number }; 
-  highlightRow?: number; 
+  highlightRow?: number;
 }
 
 interface SolutionResponse {
   status: string;
   results: number[];
   executionTime: number ;
-  totalIterations : number;
+  TotalIternation : number; 
   steps: MatrixStep[];
-  errorMessage : null
+  errorMessage : string | null;
+  equations?: string[];
 }
 
 @Component({
@@ -29,51 +33,54 @@ interface SolutionResponse {
   encapsulation : ViewEncapsulation.None 
 })
 export class App {
-  //Inputs
+  private http = inject(HttpClient);
+
   NumberEquations: number | null = null;
   
-  //Data Structures
   matrixA: number[][] = [];
   matrixB: number[] = [];
   
-  //UI State
   isGenerated: boolean = false;
   isSolved: boolean = false;
-  showError : boolean = false ;
-  //Method Selection
-  selectedMethod: string = 'GAUSS';
+  showError : boolean = false;
+  showSteps: boolean = false; 
+
+  currentMatrixL: number[][] | null = null;
+  currentMatrixU: number[][] | null = null;
+
+  selectedMethod: string = 'Naive_Gauss';
   methods = [
-    { id: 'GAUSS', name: 'Gauss Elimination' },
-    { id: 'JORDAN', name: 'Gauss-Jordan' },
+    { id: 'Naive_Gauss', name: 'Naive Gauss Elimination' },
+    { id: 'Gauss_elimination_Pivot', name: 'Gauss Partial Pivoting' },
+    { id: 'Gauss_elimination_Pivoting_Scaling', name: 'Gauss Pivoting & Scaling' },
+    { id: 'Gauss_Jordan', name: 'Gauss-Jordan' },
     { id: 'LU', name: 'LU Decomposition' },
     { id: 'JACOBI', name: 'Jacobi Iteration' },
-    { id: 'SEIDEL', name: 'Gauss-Seidel' }
+    { id: 'Gauss_Seidel', name: 'Gauss-Seidel' }
   ];
 
-  //Method Parameters
   luForm: string = 'DOOLITTLE';
   initialGuess: number[] = [];
   maxIterations: number = 50;
   tolerance: number = 0.0001;
 
-  //Solution Player State
   solutionData: SolutionResponse | null = null;
   currentStepIndex: number = 0;
   currentMatrixADisplay: number[][] = [];
   currentMatrixBDisplay: number[] = [];
   progressPercentage :number = 0;
-  // 1. Generate Grid (N x N+1)
+
   gridGenerator() {
     if (!this.NumberEquations || this.NumberEquations < 1) {
-
       alert("Please enter a valid dimension (N >= 1)");
       return;
     }
-
     this.matrixA = [];
     this.matrixB = [];
     this.initialGuess = [];
-    this.showError = false ;
+    this.showError = false;
+    this.isSolved = false;
+    this.showSteps = false;
 
     for (let i = 0; i < this.NumberEquations; i++) {
       const row = new Array(this.NumberEquations).fill(null);
@@ -81,98 +88,18 @@ export class App {
       this.matrixB.push(null as any);
       this.initialGuess.push(0);
     }
-
     this.isGenerated = true;
-    this.isSolved = false;
   }
+
   isValid() : boolean{
     for(let i = 0 ; i < this.matrixA.length ; i++){
       for(let j = 0 ; j < this.matrixB.length ; j++){
         if(this.matrixA[i][j]==null || this.matrixA[i][j] == undefined )return false ;
-
       }
       if(this.matrixB[i]==null || this.matrixB[i] == undefined )return false ;
-
     }
     return true ;
   }
-
-  // 2. Solve & Create Mock Response
-  solve() {
-
-    this.showError = true ;
-
-    if(!this.isValid()){
-      this.animateInvalidCells();
-      return ;
-    }
-    this.progressPercentage = 0;
-    const payload = {
-      matrixA: this.matrixA,
-      matrixB: this.matrixB,
-      methodID : this.selectedMethod,
-        methodParams: {
-          luForm: this.selectedMethod === 'LU' ? this.luForm : null,
-          initialGuess: (this.selectedMethod === 'JACOBI' || this.selectedMethod === 'SEIDEL') ? this.initialGuess : null,
-          maxIterations: this.maxIterations,
-          tolerance: this.tolerance
-        }
-    };
-
-    console.log("Sending Payload to Backend:", payload);
-
-    this.solutionData = {
-      status: "SUCCESS",
-      results: [1, 2, 3],
-      executionTime: 5 ,
-      totalIterations : 3,
-      steps: [
-        {
-            stepNumber: 1,
-            description: "select pivot",
-            currentMatrixA: [[2,1,4],[1,2,3],[4,-1,2]],
-            currentMatrixB : [1,1.5,2],
-            pivotIndex: { r: 0, c: 0 },
-          },
-        {
-            stepNumber: 2,
-            description: "-0.5*r1+r2 ===> r2",
-            currentMatrixA: [[2,1,4],[0,1.5,1],[4,-1,2]],
-            currentMatrixB : [1,1,2],
-            pivotIndex: { r: 0, c: 0 },
-            highlightRow : 1
-        },
-        {
-            stepNumber: 3,
-            description: "-2*r1+r3 ===> r3",
-            currentMatrixA: [[2,1,4],[0,1.5,1],[0,-3,-6]],
-            currentMatrixB : [1,1,0],
-            pivotIndex: { r: 0, c: 0 },
-            highlightRow : 2
-        },
-        {
-            stepNumber: 4,
-            description: "select pivot",
-            currentMatrixA: [[2,1,4],[0,1.5,1],[0,-3,-6]],
-            currentMatrixB : [1,1,0],
-            pivotIndex: { r: 1, c: 1 },
-        },
-        {
-            stepNumber: 5,
-            description: "2*r2+r3 ===> r3",
-            currentMatrixA: [[2,1,4],[0,1.5,1],[0,0,-4]],
-            currentMatrixB : [1,1,2],
-            pivotIndex: { r: 1, c: 1 },
-            highlightRow : 2
-        },
-      ],
-      errorMessage:null
-    };
-    this.isSolved = true;
-    this.currentStepIndex = 0;
-    this.updateDisplayMatrix();
-  }
-
 
   animateInvalidCells() {
     setTimeout(() => {
@@ -185,14 +112,70 @@ export class App {
     }, 0);
   }
 
-  //Solution Player Logic
+  solve() {
+    this.showError = true;
+
+    if(!this.isValid()){
+      this.animateInvalidCells();
+      return;
+    }
+    
+    this.progressPercentage = 0;
+    this.showSteps = false;
+
+    let finalMethodID = this.selectedMethod;
+    if (this.selectedMethod === 'LU') {
+        if (this.luForm === 'DOOLITTLE') finalMethodID = 'LU_decomposition_Doolittle';
+        if (this.luForm === 'CROUT') finalMethodID = 'LU_decomposition_Croud';
+        if (this.luForm === 'CHOLESKY') finalMethodID = 'LU_decomposition_Cholesky';
+    } else if (this.selectedMethod === 'JACOBI') {
+        finalMethodID = 'Jacobi';
+    } else if (this.selectedMethod === 'Gauss_Seidel') { 
+        finalMethodID = 'Gauss_Seidel';
+    }
+
+    const payload = {
+      MethodId: finalMethodID,
+      precision: 10,
+      size: this.NumberEquations,
+      matrix: this.matrixA,
+      vector_of_sol: this.matrixB,
+      initial_guess: (this.selectedMethod === 'JACOBI' || this.selectedMethod === 'Gauss_Seidel') ? this.initialGuess : [],
+      max_iterations: this.maxIterations,
+      Tolerance: this.tolerance,
+      methodParams: {} 
+    };
+
+    console.log("Sending Payload:", payload);
+
+    this.http.post<SolutionResponse>('http://localhost:8000/solve', payload)
+      .subscribe({
+        next: (response) => {
+          if (response.errorMessage) {
+            alert("Solver Error: " + response.errorMessage);
+            return;
+          }
+          this.solutionData = response;
+          this.isSolved = true;
+          this.currentStepIndex = 0;
+          this.updateDisplayMatrix();
+          this.getPercentage();
+        },
+        error: (err) => {
+          console.error("Connection Error:", err);
+          alert("Failed to connect to backend. Is uvicorn running?");
+        }
+      });
+  }
+
+  viewSteps() { this.showSteps = true; }
+  backToResults() { this.showSteps = false; }
 
   nextStep() {
     if (this.solutionData && this.currentStepIndex < this.solutionData.steps.length - 1) {
       this.currentStepIndex++;
       this.updateDisplayMatrix();
       this.getPercentage();
-
     }
   }
 
@@ -206,48 +189,43 @@ export class App {
 
   updateDisplayMatrix() {
     if (this.solutionData) {
-      this.currentMatrixADisplay = this.solutionData.steps[this.currentStepIndex].currentMatrixA;
-      this.currentMatrixBDisplay = this.solutionData.steps[this.currentStepIndex].currentMatrixB;
-
-      
+      const step = this.solutionData.steps[this.currentStepIndex];
+      this.currentMatrixADisplay = step.matrixA;
+      this.currentMatrixBDisplay = step.matrixB;
+      this.currentMatrixL = step.L || null;
+      this.currentMatrixU = step.U || null;
     }
   }
 
   getCellStyle(rowIndex: number, colIndex: number) {
     if (!this.solutionData) return {};
-
     const step = this.solutionData.steps[this.currentStepIndex];
-    const aCols = this.currentMatrixADisplay && this.currentMatrixADisplay[0] ? this.currentMatrixADisplay[0].length : 0;
-    const isBCol = colIndex === aCols;
-
-    // Highlight pivot cell
+    
     if (step.pivotIndex && step.pivotIndex.r === rowIndex && step.pivotIndex.c === colIndex) {
-      return {
-        'border-color': 'var(--success-color)',
-        'box-shadow': '0 0 15px var(--success-color)',
-        'transform': 'scale(1.05)'
-      };
-    }
-
-    // Highlight entire row
-
-    if (step.highlightRow === rowIndex && (colIndex < aCols || isBCol)) {
-      if (isBCol) {
         return {
-          'background': 'rgba(0, 224, 255, 0.18)' 
+          'border-color': 'var(--success-color)',
+          'box-shadow': '0 0 15px var(--success-color)',
+          'transform': 'scale(1.05)'
         };
       }
+  
+      const aCols = this.currentMatrixADisplay && this.currentMatrixADisplay[0] ? this.currentMatrixADisplay[0].length : 0;
+      const isBCol = colIndex === aCols;
 
-      return {
-        'background': 'rgba(255, 75, 145, 0.2)'
-      };
-    }
+      if (step.highlightRow === rowIndex && (colIndex < aCols || isBCol)) {
+        if (isBCol) {
+          return { 'background': 'rgba(0, 224, 255, 0.18)' };
+        }
+        return { 'background': 'rgba(255, 75, 145, 0.2)' };
+      }
     return {};
   }
 
-  getPercentage(){
-    if (!this.solutionData) return 0;
-    this.progressPercentage = ((this.currentStepIndex) / (this.solutionData.steps.length-1)) * 100;
-    return ;
+getPercentage() {
+    if (!this.solutionData || !this.solutionData.steps || this.solutionData.steps.length === 0) {
+        this.progressPercentage = 0;
+        return;
+    }
+    this.progressPercentage = ((this.currentStepIndex + 1) / this.solutionData.steps.length) * 100;
   }
 }

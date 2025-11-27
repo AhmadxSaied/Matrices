@@ -1,6 +1,7 @@
 import {
   getDOM
-} from "./chunk-VUHAR4YV.js";
+} from "./chunk-WEKWBOLC.js";
+import "./chunk-EITAFI4I.js";
 import {
   ApplicationRef,
   ChangeDetectorRef,

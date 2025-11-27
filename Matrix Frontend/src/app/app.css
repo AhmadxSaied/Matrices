@@ -1,4 +1,3 @@
-/* --- Global Theme Variables --- */
 :root {
     --bg-color: #0f172a;
     --card-bg: #1e1e3f;
@@ -12,7 +11,7 @@
     --success-color: #3ee577;
     --error-color: #ff6b6b;
 }
-/* --- Base Setup --- */
+
 * {
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
@@ -31,7 +30,6 @@ body {
     overflow-x: hidden;
 }
 
-/* --- Typography --- */
 h1, h2 {
     text-align: center;
     color: var(--primary-color);
@@ -52,7 +50,6 @@ p {
     color: var(--text-muted);
 }
 
-/* --- Main Container --- */
 .solver-container {
     background: rgba(30, 30, 63, 0.85);
     backdrop-filter: blur(12px);
@@ -70,7 +67,6 @@ p {
     box-shadow: 0 0 30px var(--accent-color);
 }
 
-/* --- Puzzle Input Section --- */
 #input-container {
     text-align: center;
     margin: 0 auto;
@@ -86,13 +82,14 @@ p {
 }
 
 .puzzle-cell {
+    display:flex;
     width: 100%;
     aspect-ratio: 1 / 1;
     background: var(--tile-empty-bg);
     border: 2px solid var(--border-color);
     border-radius: 12px;
     color: var(--text-color);
-    font-size: clamp(1.2rem, 2vw, 2.5rem); /* ثابتة لكن تصغر قليلاً للشاشات الصغيرة */
+    font-size: clamp(1.2rem, 2vw, 2.5rem); 
     font-weight: bold;
     text-align: center;
     transition: box-shadow 0.25s ease, border-color 0.25s ease;
@@ -100,6 +97,9 @@ p {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    align-items: center;
+    justify-content: center;
+
 }
 .puzzle-cell:hover {
     box-shadow: 0 0 20px var(--accent-color);
@@ -136,23 +136,22 @@ p {
     box-sizing: border-box;
 }
 
-/* --- Controls --- */
 .controls {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 15px;
     margin-top: 20px;
+    width: 100%;
 }
 
 @media (min-width: 600px) {
     .controls {
         flex-direction: row;
-        justify-content: center;
+        justify-content: space-between;
     }
 }
 
-/* --- Buttons & Select --- */
 button, select {
     font-family: "Inter", sans-serif;
     font-weight: 600;
@@ -163,11 +162,10 @@ button, select {
     color: #fff;
     cursor: pointer;
     transition: all 0.3s ease;
-    width: 100%;
+    /*width: 100%;*/
     max-width: 220px;
     box-shadow: 0 0 15px rgba(255, 75, 145, 0.4);
 }
-
 button:hover, select:hover {
     background: var(--accent-color);
     color: #000;
@@ -181,7 +179,6 @@ button:disabled {
     box-shadow: none;
 }
 
-/* --- Dropdown Styling --- */
 select {
     background: var(--tile-bg);
     border: 1px solid var(--border-color);
@@ -192,7 +189,6 @@ select {
     background-size: 16px;
 }
 
-/* --- Error Message --- */
 .error {
     color: var(--error-color);
     font-weight: bold;
@@ -205,7 +201,6 @@ select {
     display: block;
 }
 
-/* --- Output Section --- */
 #display-container {
     display: none;
     max-width: 850px;
@@ -290,16 +285,14 @@ select {
     transform: scale(1.05);
 }
 
-/* Make next/prev buttons wider and keep text on one line */
 .controls button {
-    min-width: 110px;
+    min-width: 150px;
     white-space: nowrap;
     font-size: 1.05rem;
     padding-left: 18px;
     padding-right: 18px;
 }
 
-/* --- Animations --- */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
@@ -316,7 +309,6 @@ select {
     75% { transform: translateX(6px); }
 }
 
-/* --- Responsive Enhancements --- */
 @media (min-width: 768px) {
     .solution-content {
         flex-direction: row;
@@ -401,7 +393,7 @@ select {
     outline: none;
 }
 .select-method{
-    width: 150px;
+    width: 170px;
 }
 span{
     color: var(--text-muted);
@@ -478,18 +470,247 @@ thead tr th.col{
     margin-top: 0;
     color: #F9F9F9;
     font-size: 1.1rem;
-    border-bottom: 2px solid var(--accent-color); /* Your purple color */
+    border-bottom: 2px solid var(--accent-color);
     display: inline-block;
     padding-bottom: 10px;
     margin-bottom: 15px;
 }
 
 .equation-row {
-    font-family: 'Times New Roman', serif; /* Looks like real math */
-    font-size: 1.3rem; /* Make it large and readable */
+    font-family: 'Times New Roman', serif;
+    font-size: 1.3rem; 
     margin-bottom: 12px;
     padding: 10px;
     background-color: inherit;
     border-radius: 6px;
-    border-left: 4px solid var(--accent-color); /* Adds a nice colored bar on the left */
+    border-left: 4px solid var(--accent-color);
+}
+
+#results-dashboard {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.metrics-container {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.metric-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 15px 25px;
+    display: flex;
+    flex-direction: column;
+    min-width: 120px;
+    transition: transform 0.2s;
+}
+
+.metric-card:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateY(-3px);
+    border-color: var(--accent-color);
+}
+
+.metric-card .label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.metric-card .value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #fff;
+    margin-top: 5px;
+}
+
+.vector-display {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 20px;
+    margin-top: 25px;
+    border: 1px solid var(--border-color);
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.2);
+}
+
+.vector-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.vector-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 12px 20px;
+    border-radius: 8px;
+    border-left: 3px solid var(--primary-color);
+}
+
+.vector-item:nth-child(even) {
+    background: rgba(255, 255, 255, 0.06);
+    border-left: 3px solid var(--accent-color);
+}
+
+.var-name {
+    font-weight: bold;
+    color: var(--text-muted);
+}
+
+.var-value {
+    font-family: 'Courier New', monospace;
+    font-size: 1.2rem;
+    color: #fff;
+    font-weight: bold;
+}
+
+.animate-up {
+    animation: slideUp 0.5s ease-out;
+}
+
+.vector-grid::-webkit-scrollbar {
+    width: 6px;
+}
+.vector-grid::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+}
+.vector-grid::-webkit-scrollbar-thumb {
+    background: var(--tile-bg);
+    border-radius: 3px;
+}
+
+.step-description {
+    background: rgba(255, 255, 255, 0.05); 
+    border-left: 4px solid var(--accent-color); 
+    border-radius: 4px;
+    padding: 15px 25px;
+    font-family: "Courier New", Courier, monospace; 
+    font-weight: 900; 
+    font-size: 1.2rem; 
+    color: #ffffff; 
+    letter-spacing: 0.5px; 
+    display: inline-block;
+    margin-top: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.lu-container {
+    display: flex;
+    flex-direction: row; 
+    justify-content: center; 
+    align-items: flex-start; 
+    gap: 20px; 
+    margin-top: 40px;
+    margin-bottom: 30px;
+    width: 100%;
+    flex-wrap: wrap; 
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.02); 
+    border-radius: 20px;
+    border: 1px dashed var(--border-color);
+}
+
+.matrix-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1; 
+    min-width: 300px; 
+}
+
+.lu-separator {
+    font-size: 3rem;
+    font-weight: bold;
+    color: var(--text-muted);
+    align-self: center; 
+    margin: 0 10px;
+}
+
+.matrix-wrapper .puzzle-grid {
+    width: 100%; 
+    max-width: 500px; 
+}
+.popup{
+    position: fixed;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    top: 0;
+    left: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    transition: opacity 0.3s ease,visibility 0.3s ease;
+}
+.popup.show {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+.popup-menu{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    min-width: 450px;
+    min-height: 250px;
+    background-color: var(--tile-bg);
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    transform: scale(0.7);
+    transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28),box-shadow 0.2s ease-in-out;
+}
+.popup.show .popup-menu {
+    transform: scale(1);
+}
+.popup-menu:hover {
+    box-shadow: 0 0 30px var(--accent-color);
+}
+.popup-controlls{
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    padding: 30px 20px 10px 10px;
+    align-items: center;
+}
+.popup-menu input{
+    margin-left: auto;
+    border-radius: 10px;
+    text-align: center;
+    color: var(--text-muted);
+    background-color: #403f3f;
+    min-height: 30px;
+    max-height: 40px;
+    transition: all 0.1s ease-in-out;
+}
+.popup-menu input:hover{
+    box-shadow: 0 0 30px var(--error-color);
+    border: 1px solid var(--error-color);
+}
+.continuebtn {
+    display: flex;
+    width: 100%;
+    margin: auto 10px 20px 0;
+    justify-content: center;
+}
+.initial-guess{
+    width: 100%;
+    padding-bottom: 20px;
 }

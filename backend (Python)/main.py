@@ -16,6 +16,8 @@ class Item(BaseModel):
     initial_guess: list[Decimal] = []
     max_iterations:int | None = 100
     Tolerance : Decimal | None = Decimal("1e-5")
+    methodParams: dict | None = {}
+    
 
 # +++++++++++++++++++++++++++++++++++++++++++++
 # ++++++++++++++++ methods ++++++++++++++++++++

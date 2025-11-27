@@ -164,9 +164,17 @@ export class App {
     this.http.post<SolutionResponse>('http://127.0.0.1:8000/solve', payload)
       .subscribe({
         next: (response) => {
+          if(this.selectedMethod !== 'JACOBI' && this.selectedMethod !== 'Gauss_Seidel') {
           if (response.errorMessage) {
             alert("Solver Error: " + response.errorMessage);
             return;
+          }
+          }
+          else{
+            if (response.errorMessage === 'can\'t divide by zero') {
+              alert("Solver Error: " + response.errorMessage);
+              return;
+            }
           }
           this.solutionData = response;
           this.isSolved = true;

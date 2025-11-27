@@ -8,7 +8,7 @@
     --border-color: rgba(255, 255, 255, 0.15);
     --tile-bg: #4a4a70;
     --tile-empty-bg: rgba(255, 255, 255, 0.05);
-    --success-color: #3ee577;
+    --success-color: #49e53e;
     --error-color: #ff6b6b;
 }
 
@@ -658,6 +658,7 @@ thead tr th.col{
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 2000;
     transition: opacity 0.3s ease,visibility 0.3s ease;
+    overflow: scroll;
 }
 .popup.show {
     opacity: 1;

@@ -70,8 +70,12 @@
     @if(isSolved && solutionData) {
         
         <div id="results-dashboard" class="animate-up">
-            <h1><span style="color:var(--success-color)">✔</span> Solution Found</h1>
-            
+            @if (solutionData.errorMessage ){
+                <h1><span style="color:var(--error-color)">⨯</span> Solution not Found</h1>
+            } @else {
+                <h1><span style="color:var(--success-color)">✔</span> Solution Found</h1>
+            }
+
             <div class="metrics-container">
                 <div class="metric-card">
                     <span class="label">Time</span>
@@ -83,7 +87,11 @@
                 </div>
                 <div class="metric-card">
                     <span class="label">Status</span>
-                    <span class="value" style="color: var(--success-color)">Optimal</span>
+                    @if (solutionData.errorMessage){
+                        <span class="value" style="color: var(--error-color)">Didnt Converge</span>
+                    } @else {
+                        <span class="value" style="color: var(--success-color)">Optimal</span>
+                    }
                 </div>
             </div>
 
@@ -207,8 +215,7 @@
 
                             <div class="equations-list">
                                 @for (eq of solutionData.equations; track $index) {
-                                    <div class="equation-row">
-                                        {{ eq }}
+                                    <div class="equation-row" [innerHTML]="eq">
                                     </div>
                                 }
                             </div>

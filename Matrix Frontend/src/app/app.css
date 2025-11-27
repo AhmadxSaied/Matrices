@@ -202,8 +202,6 @@ select {
     max-width: 850px;
     width: 100%;
     margin-top: 40px;
-    margin-left: auto;
-    margin-right: auto;
 }
 
 .solution-content {
@@ -217,14 +215,6 @@ select {
 .display-board-container {
     width: 100%;
     max-width: 420px;
-}
-
-
-.puzzle-cell, .puzzle-cell input {
-    text-align: center;
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
 
 #display-board {

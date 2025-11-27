@@ -22,6 +22,8 @@ interface SolutionResponse {
   steps: MatrixStep[];
   errorMessage : string | null;
   equations?: string[];
+  L?: number[][];
+  U?: number[][];
 }
 
 @Component({
@@ -203,8 +205,8 @@ export class App {
       const step = this.solutionData.steps[this.currentStepIndex];
       this.currentMatrixADisplay = step.matrixA;
       this.currentMatrixBDisplay = step.matrixB;
-      this.currentMatrixL = step.L || null;
-      this.currentMatrixU = step.U || null;
+      this.currentMatrixL = this.solutionData.L || null;
+      this.currentMatrixU = this.solutionData.U || null;
     }
   }
 

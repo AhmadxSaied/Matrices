@@ -21,6 +21,8 @@ class Response:
     TotalIternation: int
     steps: List[Steps]
     errorMessage:str
+    L:List[List[Decimal]] | None = None
+    U:List[List[Decimal]] | None =None
 
 def addsteps(
         all_steps:List['Steps'],
@@ -38,7 +40,7 @@ def addsteps(
         description=description,
         matrixA=matrix_copy,
         matrixB=vector_copy,
-        L = L,
-        U = U
+        L = copy.deepcopy(L),
+        U = copy.deepcopy(U),
     )
     all_steps.append(new_step)

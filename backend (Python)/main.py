@@ -212,8 +212,12 @@ def LU_decomposition_Doolittle_method(item: Item,all_steps:List['Steps']):
     getcontext().prec = item.precision if item.precision is not None else 10
     timer_start = time.perf_counter()
     # Step 1: LU Decomposition (Doolittle's Method)
-    L = [[Decimal("0") for _ in range(item.size)] for _ in range(item.size)]
     U = [[Decimal("0") for _ in range(item.size)] for _ in range(item.size)]
+    L = [[ Decimal("0") for _ in range(item.size)] for _ in range(item.size) ]
+    for i in range(item.size):
+        for j in range(item.size):
+            if(i==j):
+                L[i][j] = Decimal("1")
 
     for i in range(item.size):
         # Upper Triangular
@@ -222,7 +226,7 @@ def LU_decomposition_Doolittle_method(item: Item,all_steps:List['Steps']):
             for k in range(i):
                 sum_u += L[i][k] * U[k][j]
             U[i][j] = item.matrix[i][j] - sum_u
-            addsteps(all_steps,f"U{i}{j} = A{i}{j} - {sum_u}",item.matrix,item.vector_of_sol,L,U)
+            addsteps(all_steps,f"U{i}{j} = A{i}{j} - {sum_u}",U,item.vector_of_sol,L,U)
         # Lower Triangular
         for j in range(i, item.size):
             if i == j:
@@ -235,7 +239,7 @@ def LU_decomposition_Doolittle_method(item: Item,all_steps:List['Steps']):
                     timer_end = time.perf_counter()
                     return Response("ERROR",item.vector_of_sol,round(timer_end-timer_start,6),0,all_steps,"Singular matrix")  # Singular matrix
                 L[j][i] = (item.matrix[j][i] - sum_l) / U[i][i]
-                addsteps(all_steps,f"L{j}{i} = (A{j}{i} - {sum_l})/U{i}{i}",item.matrix,item.vector_of_sol,L,U)
+                addsteps(all_steps,f"L{j}{i} = (A{j}{i} - {sum_l})/U{i}{i}",L,item.vector_of_sol,L,U)
 
     # Step 2: Solve Ly = b using forward substitution
     addsteps(all_steps,"solving Ly=b using forward substitution",L,item.vector_of_sol,L,U)
@@ -245,7 +249,7 @@ def LU_decomposition_Doolittle_method(item: Item,all_steps:List['Steps']):
         for j in range(i):
             sum_y += L[i][j] * y[j]
         y[i] = item.vector_of_sol[i] - sum_y
-        addsteps(all_steps,f"y{i} = b{i} - {sum_y}",item.matrix,y,L,U)
+        addsteps(all_steps,f"y{i} = b{i} - {sum_y}",L,y,L,U)
     # Step 3: Solve Ux = y using backward substitution
     addsteps(all_steps,"solving Ux=y using backward substitution",U,y,L,U)
     x = [Decimal("0") for _ in range(item.size)]
@@ -259,7 +263,7 @@ def LU_decomposition_Doolittle_method(item: Item,all_steps:List['Steps']):
         x[i] = (y[i] - sum_x) / U[i][i]
         addsteps(all_steps,f"x{i} = (y{i} - {sum_x})/ U{i}{i}",U,x,L,U)
     timer_stop = time.perf_counter()
-    return Response("SUCCESS",x,round(timer_stop-timer_start,6),item.max_iterations,all_steps,"")
+    return Response("SUCCESS",x,round(timer_stop-timer_start,6),item.max_iterations,all_steps,"",L,U)
 
 # ! LU Decomposition Method (Crout's Method)
 def LU_decomposition_Crout_method(item: Item,all_steps:List['Steps']):
@@ -268,7 +272,10 @@ def LU_decomposition_Crout_method(item: Item,all_steps:List['Steps']):
     # Step 1: LU Decomposition (Crout's Method)
     L = [[Decimal("0") for _ in range(item.size)] for _ in range(item.size)]
     U = [[Decimal("0") for _ in range(item.size)] for _ in range(item.size)]
-
+    for i in range(item.size):
+        for j in range(item.size):
+            if(i==j):
+                U[i][j] = Decimal("1")
     for i in range(item.size):
         # Lower Triangular
         for j in range(i, item.size):
@@ -276,7 +283,7 @@ def LU_decomposition_Crout_method(item: Item,all_steps:List['Steps']):
             for k in range(i):
                 sum_l += L[j][k] * U[k][i]
             L[j][i] = item.matrix[j][i] - sum_l
-            addsteps(all_steps,f"L{j}{i} = A{j}{i} - {sum_l}",item.matrix,item.vector_of_sol,L,U)
+            addsteps(all_steps,f"L{j}{i} = A{j}{i} - {sum_l}",L,item.vector_of_sol,L,U)
         # Upper Triangular
         for j in range(i, item.size):
             if i == j:
@@ -289,7 +296,7 @@ def LU_decomposition_Crout_method(item: Item,all_steps:List['Steps']):
                     timer_end = time.perf_counter()
                     return Response("ERROR",item.vector_of_sol,round(timer_end-timer_start,6),0,all_steps,"Singular matrix") # Singular matrix
                 U[i][j] = (item.matrix[i][j] - sum_u) / L[i][i]
-                addsteps(all_steps, f"U{i}{j} = (A{i}{j} - {sum_u})/L{i}{i}", item.matrix, item.vector_of_sol, L, U)
+                addsteps(all_steps, f"U{i}{j} = (A{i}{j} - {sum_u})/L{i}{i}", U, item.vector_of_sol, L, U)
 
     # Step 2: Solve Ly = b using forward substitution
     addsteps(all_steps,"solving Ly=b using forward substitution",L,item.vector_of_sol,L,U)
@@ -303,9 +310,9 @@ def LU_decomposition_Crout_method(item: Item,all_steps:List['Steps']):
             return Response("ERROR", item.vector_of_sol, round(timer_end - timer_start, 6), 0, all_steps,
                             "Singular matrix (Pivot is zero)")
         y[i] = (item.vector_of_sol[i] - sum_y)/L[i][i]
-        addsteps(all_steps,f"y{i} = b{i}-{sum_y}",L,y,L,U)
+        addsteps(all_steps,f"y{i} = (b{i}-{sum_y})/L{i}{i}",L,y,L,U)
     # Step 3: Solve Ux = y using backward substitution
-    addsteps(all_steps, "solving Ux=y using forward substitution", L, item.vector_of_sol, L, U)
+    addsteps(all_steps, "solving Ux=y using forward substitution", U, item.vector_of_sol, L, U)
     x = [Decimal("0") for _ in range(item.size)]
     for i in range(item.size-1, -1, -1):
         sum_x = Decimal("0")
@@ -318,7 +325,7 @@ def LU_decomposition_Crout_method(item: Item,all_steps:List['Steps']):
         x[i] = (y[i] - sum_x) / U[i][i]
         addsteps(all_steps, f"x{i} = (b{i}-{sum_x})/U{i}{i}", U, x, L, U)
     timer_stop = time.perf_counter()
-    return Response("SUCCESS",x,round(timer_stop-timer_start,6),item.max_iterations,all_steps,"")
+    return Response("SUCCESS",x,round(timer_stop-timer_start,6),item.max_iterations,all_steps,"",L,U)
 
 # ! LU Decomposition Method (Cholesky's Method)
 def LU_decomposition_Cholesky_method(item: Item,all_steps:List['Steps']):
@@ -359,7 +366,7 @@ def LU_decomposition_Cholesky_method(item: Item,all_steps:List['Steps']):
                 try:
                     # Decimal objects have a .sqrt() method
                     L[i][i] = value.sqrt()
-                    addsteps(all_steps,f"L({i},{i} = √(A({i},{i} - {sum_val})))",item.matrix,item.vector_of_sol,L)
+                    addsteps(all_steps,f"L({i},{i} = √(A({i},{i} - {sum_val})))",L,item.vector_of_sol,L)
                 except AttributeError:
                     # Fallback if Decimal().sqrt() is not available (though it should be with Decimal)
                     return "error: Missing Decimal sqrt method"
@@ -410,6 +417,6 @@ def LU_decomposition_Cholesky_method(item: Item,all_steps:List['Steps']):
             return Response("ERROR",item.vector_of_sol,round(timer_end-timer_start,6),0,all_steps,f"L{i},{i} zero during forward substitution")
 
         x[i] = (y[i] - sum_x) / L[i][i]
-        addsteps(all_steps, f"x({i}) = (y({i}) - {sum_x})/L({i},{i})", y, x, L)
+        addsteps(all_steps, f"x({i}) = (y({i}) - {sum_x})/L({i},{i})", L, x, L)
     timer_end = time.perf_counter()
-    return Response("SUCCESS",x,round(timer_end-timer_start,6),0,all_steps,"")
+    return Response("SUCCESS",x,round(timer_end-timer_start,6),0,all_steps,"",L)

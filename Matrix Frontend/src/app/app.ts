@@ -12,6 +12,7 @@ interface MatrixStep {
   U?: number[][];
   pivotIndex?: { r: number, c: number }; 
   highlightRow?: number;
+  Error?:number;
 }
 
 interface SolutionResponse {
@@ -24,6 +25,7 @@ interface SolutionResponse {
   equations?: string[];
   L?: number[][];
   U?: number[][];
+  Diagonal?: Boolean;
 }
 
 @Component({

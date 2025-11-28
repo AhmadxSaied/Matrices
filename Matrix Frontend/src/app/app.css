@@ -715,3 +715,22 @@ thead tr th.col{
     width: 100%;
     padding-bottom: 20px;
 }
+.Diagonal-container{
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 20px;
+}
+.Diagonal-container span {
+    font-family: 'Times New Roman', serif;
+    font-size: 2rem;
+    padding: 10px;
+    background-color: inherit;
+    border-radius: 6px;
+}
+.res{
+    display: flex;
+    margin-left: auto;
+}

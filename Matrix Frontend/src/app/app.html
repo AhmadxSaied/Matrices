@@ -221,7 +221,18 @@
                             </div>
                         </div>
                     }
+                    <div class="Diagonal-container">
+                        <h3>Diagonally Dominant</h3>
+                        <div class="res">
+                        @if(solutionData.Diagonal){
+                            <span style="border-right: 4px solid var(--accent-color);">{{solutionData.Diagonal}}</span>
 
+                        } @else {
+                            <span style="border-right: 4px solid var(--error-color); color: #d85757">{{solutionData.Diagonal}}</span>
+
+                        }
+                        </div>
+                    </div>
                     <div class="table-container">
                         <table class="table">
                             <thead>
@@ -244,6 +255,13 @@
                                         }
                                     </tr>
                                 }
+                            <th class="col">Relative Error</th>
+                                @for (iteration of solutionData.steps;track iteration.stepNumber){
+                                    <td>
+                                        {{iteration.Error | number:'1.0-4' }}
+                                    </td>
+                                }
+
                             </tbody>
                         </table>
                     </div>

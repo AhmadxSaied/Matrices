@@ -177,6 +177,7 @@ def Jacobi_method(item: Item,all_steps:List['Steps']):
     equa=[]
     getcontext().prec = item.precision if item.precision is not None else 10
     values_of_unknowns = item.initial_guess[:]
+    diagonl = helper.check_diagonally_dominant(item.size,values_of_unknowns,item.matrix,all_steps)
     # Check for zero pivots (diagonal elements) before starting
     for i in range(item.size):
         if item.matrix[i][i] == 0:
@@ -227,9 +228,9 @@ def Jacobi_method(item: Item,all_steps:List['Steps']):
         if max_relative_error < item.Tolerance:
             # Convergence achieved
             timer_stop = time.perf_counter()
-            return Response("SUCCESS",values_of_unknowns,round(timer_stop - timer_start,6),iteration,all_steps,"")
+            return Response("SUCCESS",values_of_unknowns,round(timer_stop - timer_start,6),iteration,all_steps,"",Diagonal=diagonl)
     timer_stop = time.perf_counter()
-    return Response("Error",values_of_unknowns,round(timer_stop-timer_start,6),item.max_iterations,all_steps,f"error: Did not converge within {item.max_iterations} iterations. Final error: {max_relative_error}")
+    return Response("Error",values_of_unknowns,round(timer_stop-timer_start,6),item.max_iterations,all_steps,f"error: Did not converge within {item.max_iterations} iterations. Final error: {max_relative_error}",Diagonal=diagonl)
 
 # ! LU Decomposition Method (Doolittle's Method)
 def LU_decomposition_Doolittle_method(item: Item,all_steps:List['Steps']):

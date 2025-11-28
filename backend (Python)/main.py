@@ -102,7 +102,6 @@ def Gauss_Jordan_elimination(item: Item,all_steps:List['Steps']):
             return Response("Error", [], round(end_time - start_time, 6), 0, all_steps,"the system has Infinite number of solution")
     helper.normalize_matrix(item.size,item.vector_of_sol,item.matrix,all_steps)
     helper.backward_elimination(item.size,item.vector_of_sol,item.matrix, all_steps)
-    item.vector_of_sol=helper.backward_substitution(item.size,item.matrix,item.vector_of_sol,all_steps)
     end_time = time.perf_counter()
     return Response("SUCCESS",item.vector_of_sol,round(end_time-start_time,6),0,all_steps,"")
 

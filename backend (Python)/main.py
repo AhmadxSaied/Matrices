@@ -233,63 +233,89 @@ def Jacobi_method(item: Item,all_steps:List['Steps']):
     return Response("Error",values_of_unknowns,round(timer_stop-timer_start,6),item.max_iterations,all_steps,f"error: Did not converge within {item.max_iterations} iterations. Final error: {max_relative_error}",Diagonal=diagonl)
 
 # ! LU Decomposition Method (Doolittle's Method)
-def LU_decomposition_Doolittle_method(item: Item,all_steps:List['Steps']):
+def LU_decomposition_forward_elimination(item: Item, all_steps: List["Steps"]):
     getcontext().prec = item.precision if item.precision is not None else 10
     timer_start = time.perf_counter()
-    # Step 1: LU Decomposition (Doolittle's Method)
-    U = [[Decimal("0") for _ in range(item.size)] for _ in range(item.size)]
-    L = [[ Decimal("0") for _ in range(item.size)] for _ in range(item.size) ]
-    for i in range(item.size):
-        for j in range(item.size):
-            if(i==j):
-                L[i][j] = Decimal("1")
 
-    for i in range(item.size):
-        # Upper Triangular
-        for j in range(i, item.size):
-            sum_u = Decimal("0")
-            for k in range(i):
-                sum_u += L[i][k] * U[k][j]
-            U[i][j] = item.matrix[i][j] - sum_u
-            addsteps(all_steps,f"U{i}{j} = A{i}{j} - {sum_u}",U,item.vector_of_sol,L,U)
-        # Lower Triangular
-        for j in range(i, item.size):
-            if i == j:
-                L[i][i] = Decimal("1")  # Diagonal as 1
-            else:
-                sum_l = Decimal("0")
-                for k in range(i):
-                    sum_l += L[j][k] * U[k][i]
-                if U[i][i] == 0:
-                    timer_end = time.perf_counter()
-                    return Response("ERROR",item.vector_of_sol,round(timer_end-timer_start,6),0,all_steps,"Singular matrix")  # Singular matrix
-                L[j][i] = (item.matrix[j][i] - sum_l) / U[i][i]
-                addsteps(all_steps,f"L{j}{i} = (A{j}{i} - {sum_l})/U{i}{i}",L,item.vector_of_sol,L,U)
+    n = item.size
 
-    # Step 2: Solve Ly = b using forward substitution
-    addsteps(all_steps,"solving Ly=b using forward substitution",L,item.vector_of_sol,L,U)
-    y = [Decimal("0") for _ in range(item.size)]
-    for i in range(item.size):
-        sum_y = Decimal("0")
-        for j in range(i):
-            sum_y += L[i][j] * y[j]
+    # Initialize L as identity and U as a copy of A
+    L = [[Decimal("0") for _ in range(n)] for _ in range(n)]
+    U = [[item.matrix[i][j] for j in range(n)] for i in range(n)]
+
+    for i in range(n):
+        L[i][i] = Decimal("1")  # Diagonal entries = 1
+
+    # ---------------------------
+    #  Step 1: Forward Elimination
+    # ---------------------------
+    for i in range(n - 1):  # pivot row
+        if U[i][i] == 0:
+            for j in range(i+1,n-1):
+                if U[j][i] > 0 and j!= n-1:
+                    Swap = U[i]
+                    U[i]=U[j]
+                    U[j]= Swap
+                    flag =True
+                    break
+            if not flag:
+                timer_end = time.perf_counter()
+                return Response("ERROR", item.vector_of_sol, round(timer_end - timer_start, 6),
+                                0, all_steps, "Singular matrix")
+
+        for j in range(i + 1, n):  # eliminate rows below
+            multiplier = U[j][i] / U[i][i]
+            L[j][i] = multiplier
+
+            addsteps(all_steps,
+                     f"L{j}{i} = A{j}{i} / A{i}{i} = {multiplier}",
+                     item.matrix, item.vector_of_sol, L, U)
+
+            # Update row j in U
+            for k in range(i, n):
+                old_value = U[j][k]
+                U[j][k] = U[j][k] - multiplier * U[i][k]
+
+            addsteps(all_steps,
+                     f"R{j} = R{j} - ({multiplier}) * R{i}",
+                     item.matrix, item.vector_of_sol, L, U)
+
+    # ---------------------------
+    #  Step 2: Forward Substitution (Ly = b)
+    # ---------------------------
+    addsteps(all_steps, "Solving Ly=b using forward substitution", L,
+             item.vector_of_sol, L, U)
+
+    y = [Decimal("0") for _ in range(n)]
+    for i in range(n):
+        sum_y = sum(L[i][j] * y[j] for j in range(i))
         y[i] = item.vector_of_sol[i] - sum_y
-        addsteps(all_steps,f"y{i} = b{i} - {sum_y}",L,y,L,U)
-    # Step 3: Solve Ux = y using backward substitution
-    addsteps(all_steps,"solving Ux=y using backward substitution",U,y,L,U)
-    x = [Decimal("0") for _ in range(item.size)]
-    for i in range(item.size-1, -1, -1):
-        sum_x = Decimal("0")
-        for j in range(i+1, item.size):
-            sum_x += U[i][j] * x[j]
+        addsteps(all_steps,
+                 f"y{i} = b{i} - {sum_y}",
+                 item.matrix, y, L, U)
+
+    # ---------------------------
+    #  Step 3: Backward Substitution (Ux = y)
+    # ---------------------------
+    addsteps(all_steps, "Solving Ux=y using backward substitution", U, y, L, U)
+
+    x = [Decimal("0") for _ in range(n)]
+    for i in range(n - 1, -1, -1):
         if U[i][i] == 0:
             timer_end = time.perf_counter()
-            return Response("ERROR",item.vector_of_sol,round(timer_end-timer_start,6),0,all_steps,"Singular matrix")
-        x[i] = (y[i] - sum_x) / U[i][i]
-        addsteps(all_steps,f"x{i} = (y{i} - {sum_x})/ U{i}{i}",U,x,L,U)
-    timer_stop = time.perf_counter()
-    return Response("SUCCESS",x,round(timer_stop-timer_start,6),item.max_iterations,all_steps,"",L,U)
+            return Response("ERROR", item.vector_of_sol, round(timer_end - timer_start, 6),
+                            0, all_steps, "Singular matrix")
 
+        sum_x = sum(U[i][j] * x[j] for j in range(i + 1, n))
+        x[i] = (y[i] - sum_x) / U[i][i]
+
+        addsteps(all_steps,
+                 f"x{i} = (y{i} - {sum_x}) / U{i}{i}",
+                 U, x, L, U)
+
+    timer_stop = time.perf_counter()
+    return Response("SUCCESS", x, round(timer_stop - timer_start, 6),
+                    item.max_iterations, all_steps,"",L,U)
 # ! LU Decomposition Method (Crout's Method)
 def LU_decomposition_Crout_method(item: Item,all_steps:List['Steps']):
     timer_start = time.perf_counter()

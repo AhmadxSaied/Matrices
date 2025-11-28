@@ -219,6 +219,7 @@ export class App {
       this.currentMatrixADisplay = step.matrixA;
       this.currentMatrixBDisplay = step.matrixB;
       this.currentMatrixL = this.solutionData.L || null;
+      console.log(this.solutionData)
       this.currentMatrixU = this.solutionData.U || null;
     }
   }

@@ -38,7 +38,7 @@ def Map_to_Function(request_data : main.Item):
         Response = main.Jacobi_method(request_data,List_Steps)
         return Response
     if MethodId == "LU_decomposition_Doolittle":
-        Response = main.LU_decomposition_Doolittle_method(request_data,List_Steps)
+        Response = main.LU_decomposition_forward_elimination(request_data,List_Steps)
         return Response
     if MethodId == "LU_decomposition_Cholesky":
         Response = main.LU_decomposition_Cholesky_method(request_data,List_Steps)

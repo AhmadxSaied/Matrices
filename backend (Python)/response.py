@@ -1,8 +1,11 @@
 import decimal
 from dataclasses import dataclass
-from typing import List,Dict,Union
+from typing import List,TypedDict,Union
 import copy
 from decimal import Decimal, getcontext
+class PivotIndex(TypedDict):
+    r:int
+    c:int
 
 @dataclass
 class Steps:
@@ -13,6 +16,8 @@ class Steps:
     L:List[List[Decimal]]
     U:List[List[Decimal]]
     Error:Decimal
+    pivotIndex:PivotIndex | None = None
+    highlightRow:int | None = None
 
 @dataclass
 class Response:
@@ -26,6 +31,8 @@ class Response:
     U:List[List[Decimal]] | None =None
     equations:List[str] | None = None
     Diagonal:bool | None = None
+    pivotIndex:PivotIndex | None = None
+    highlightRow:int | None = None
 
 def addsteps(
         all_steps:List['Steps'],
@@ -35,6 +42,8 @@ def addsteps(
         L:List[List[Decimal]] | None = None,
         U:List[List[Decimal]] | None = None,
         Error:Decimal | None = None,
+        pivotIndex:PivotIndex | None = None,
+        highlightRow:int | None = None
 ) -> None:
     matrix_copy = copy.deepcopy(matrix)
     vector_copy = vector[:]
@@ -47,5 +56,8 @@ def addsteps(
         L = copy.deepcopy(L),
         U = copy.deepcopy(U),
         Error = copy.deepcopy(Error),
+        pivotIndex = pivotIndex,
+        highlightRow = highlightRow
+
     )
     all_steps.append(new_step)

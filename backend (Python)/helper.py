@@ -1,6 +1,6 @@
 from decimal import Decimal, getcontext
 from pydantic import BaseModel
-from response import addsteps,Steps
+from response import addsteps,Steps,PivotIndex
 from typing import List
 # ! forward elimination (with pivoting and scalling)
 # modify in original matrix
@@ -40,7 +40,7 @@ def forward_elimination_withPivoting_and_scaling(size, matrix, vector_of_sol, st
             dummy_b = vector_of_sol[pivot]
             vector_of_sol[pivot] = vector_of_sol[max_row_index]
             vector_of_sol[max_row_index] = dummy_b
-            addsteps(steps,f"sawp R{pivot+1} with R{max_row_index+1}",matrix,vector_of_sol)
+            addsteps(steps,f"sawp R{pivot+1} with R{max_row_index+1}",matrix,vector_of_sol,pivotIndex={"r":pivot,"c":pivot},highlightRow=max_row_index)
         # rup == rows under pivot <-- row
         for rup in range(pivot+1, size):
             # m == multiplier
@@ -49,7 +49,7 @@ def forward_elimination_withPivoting_and_scaling(size, matrix, vector_of_sol, st
             for eir in range(pivot, size):
                 matrix[rup][eir] = matrix[rup][eir] - m * matrix[pivot][eir]
             vector_of_sol[rup] = vector_of_sol[rup] - m * vector_of_sol[pivot]
-            addsteps(steps,f"R{rup+1} = R{rup+1}-({m}) * R{pivot+1} (Elimination)",matrix,vector_of_sol)
+            addsteps(steps,f"R{rup+1} = R{rup+1}-({m}) * R{pivot+1} (Elimination)",matrix,vector_of_sol,pivotIndex={"r":pivot,"c":pivot},highlightRow=rup)
     return None
         
 
@@ -88,7 +88,7 @@ def forward_elimination_withPivoting(size, matrix, vector_of_sol,steps:List['Ste
             dummy_b = vector_of_sol[pivot]
             vector_of_sol[pivot] = vector_of_sol[max_row_index]
             vector_of_sol[max_row_index] = dummy_b
-            addsteps(steps,f"sawp R{pivot+1} with R{max_row_index+1}",matrix,vector_of_sol)
+            addsteps(steps,f"sawp R{pivot+1} with R{max_row_index+1}",matrix,vector_of_sol,pivotIndex={"r":pivot,"c":pivot},highlightRow=max_row_index)
         else:
             addsteps(steps,"there is no need for pivoting as the largest pivot is in the correct position",matrix,vector_of_sol)
         # rup == rows under pivot <-- row
@@ -100,7 +100,7 @@ def forward_elimination_withPivoting(size, matrix, vector_of_sol,steps:List['Ste
                 matrix[rup][eir] = matrix[rup][eir] - m * matrix[pivot][eir]
             vector_of_sol[rup] = vector_of_sol[rup] - m * vector_of_sol[pivot]
             if(m != 0):
-                addsteps(steps,f"R{rup+1} = R{rup+1}-({m}) * R{pivot+1} (Elimination)",matrix,vector_of_sol)
+                addsteps(steps,f"R{rup+1} = R{rup+1}-({m}) * R{pivot+1} (Elimination)",matrix,vector_of_sol,pivotIndex={"r":pivot,"c":pivot},highlightRow=rup)
     return None
 
 # ! forward elimination (without pivoting) & store multipliers
@@ -122,7 +122,7 @@ def forward_elimination_withoutPivoting(size, matrix, vector_of_sol,steps:List['
             for eir in range(pivot, size):
                 matrix[rup][eir] = matrix[rup][eir] - m * matrix[pivot][eir]
             vector_of_sol[rup] = vector_of_sol[rup] - m * vector_of_sol[pivot]
-            addsteps(steps,f"R{rup+1} = R{rup+1}-({m}) * R{pivot+1} (Elimination)",matrix,vector_of_sol)
+            addsteps(steps,f"R{rup+1} = R{rup+1}-({m}) * R{pivot+1} (Elimination)",matrix,vector_of_sol,pivotIndex={"r":pivot,"c":pivot},highlightRow=rup)
     return None
 
 # ! backward substitution
@@ -180,7 +180,7 @@ def backward_elimination(size,vector_of_sol,matrix,steps:List['Steps']):
                 matrix[rup][eir] -= m*matrix[pivot][eir]
             vector_of_sol[rup]-=m* vector_of_sol[pivot]
             if(m != Decimal("0")):
-                addsteps(steps,f"R{rup+1} = R{rup+1} - ({m}) * R{pivot+1}",matrix,vector_of_sol)
+                addsteps(steps,f"R{rup+1} = R{rup+1} - ({m}) * R{pivot+1}",matrix,vector_of_sol,pivotIndex={"r":pivot,"c":pivot},highlightRow=rup)
 def normalize_matrix(size,vector_of_sol,matrix,steps:List['Steps']):
     for i in range(size):
         pivot_value = matrix[i][i]

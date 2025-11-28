@@ -135,6 +135,9 @@ export class App {
     } else if (this.selectedMethod === 'Gauss_Seidel') { 
         finalMethodID = 'Gauss_Seidel';
     }
+    else if(this.selectedMethod ==='Gauss_Jordan'){
+        finalMethodID = 'Gauss_Jordan';
+    }
     else{
       if(this.withscaling){
         finalMethodID = 'Gauss_elimination_Pivoting_Scaling';
@@ -163,7 +166,7 @@ export class App {
 
     this.http.post<SolutionResponse>('http://127.0.0.1:8000/solve', payload)
       .subscribe({
-        next: (response) => {
+        next: (response) => {console.log(payload.MethodId);
           if(this.selectedMethod !== 'JACOBI' && this.selectedMethod !== 'Gauss_Seidel') {
           if (response.errorMessage) {
             alert("Solver Error: " + response.errorMessage);

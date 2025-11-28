@@ -12,6 +12,7 @@ class Steps:
     matrixB:List[Decimal]
     L:List[List[Decimal]]
     U:List[List[Decimal]]
+    Error:Decimal
 
 @dataclass
 class Response:
@@ -24,6 +25,7 @@ class Response:
     L:List[List[Decimal]] | None = None
     U:List[List[Decimal]] | None =None
     equations:List[str] | None = None
+    Diagonal:bool | None = None
 
 def addsteps(
         all_steps:List['Steps'],
@@ -32,6 +34,7 @@ def addsteps(
         vector:List[Decimal],
         L:List[List[Decimal]] | None = None,
         U:List[List[Decimal]] | None = None,
+        Error:Decimal | None = None,
 ) -> None:
     matrix_copy = copy.deepcopy(matrix)
     vector_copy = vector[:]
@@ -43,5 +46,6 @@ def addsteps(
         matrixB=vector_copy,
         L = copy.deepcopy(L),
         U = copy.deepcopy(U),
+        Error = copy.deepcopy(Error),
     )
     all_steps.append(new_step)

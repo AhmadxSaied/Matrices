@@ -119,7 +119,7 @@ def Gauss_Seidel_method(item: Item,all_steps:List['Steps']):
             timer_stop = time.perf_counter()
             addsteps(all_steps,"Cant use Gauss Seidel because the pivot is zero and we cant divide by zero",item.matrix,item.vector_of_sol)
             return Response("Error",item.vector_of_sol,round(timer_stop - timer_start,6),0,all_steps,"can't divide by zero")
-    helper.check_diagonally_dominant(item.size,item.vector_of_sol,item.matrix,all_steps)
+    diagonal = helper.check_diagonally_dominant(item.size,item.vector_of_sol,item.matrix,all_steps)
     for i in range(item.size):
         current = f'X{i+1} = ({item.vector_of_sol[i]}'
         for j in range(item.size):
@@ -162,13 +162,13 @@ def Gauss_Seidel_method(item: Item,all_steps:List['Steps']):
         vec_str = ", ".join([f"{x:.{item.precision}f}" for x in values_of_unknowns])
 
                 # Combine Vector + Error into one message
-        addsteps(all_steps,f"Iter {k + 1}: Vector=[{vec_str}] | Error={max_relative_error:.{item.precision}f}",item.matrix,values_of_unknowns)
+        addsteps(all_steps,f"Iter {k + 1}: Vector=[{vec_str}] | Error={max_relative_error:.{item.precision}f}",item.matrix,values_of_unknowns,Error=max_relative_error)
         if max_relative_error < item.Tolerance:
             # Convergence achieved
             timer_stop = time.perf_counter()
-            return Response("SUCCESS",values_of_unknowns,round(timer_stop - timer_start,6),iterations,all_steps,"",equations=equa)
+            return Response("SUCCESS",values_of_unknowns,round(timer_stop - timer_start,6),iterations,all_steps,"",equations=equa,Diagonal=diagonal)
     timer_stop=time.perf_counter()
-    return Response("Error",values_of_unknowns,round(timer_stop-timer_start,6),item.max_iterations,all_steps,f"error: Did not converge within {item.max_iterations} iterations. Final error: {max_relative_error}",equations=equa)
+    return Response("Error",values_of_unknowns,round(timer_stop-timer_start,6),item.max_iterations,all_steps,f"error: Did not converge within {item.max_iterations} iterations. Final error: {max_relative_error}",equations=equa,Diagonal=diagonal)
 
 # ! Jacobi Method (without pivoting)
 def Jacobi_method(item: Item,all_steps:List['Steps']):
@@ -223,7 +223,7 @@ def Jacobi_method(item: Item,all_steps:List['Steps']):
 
         # Combine Vector + Error into one message
         addsteps(all_steps, f"Iter {k + 1}: Vector=[{vec_str}] | Error={max_relative_error:.{item.precision}f}",
-                 item.matrix, values_of_unknowns)
+                 item.matrix, values_of_unknowns,Error=max_relative_error)
         if max_relative_error < item.Tolerance:
             # Convergence achieved
             timer_stop = time.perf_counter()

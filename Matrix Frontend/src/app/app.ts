@@ -135,6 +135,9 @@ export class App {
     } else if (this.selectedMethod === 'Gauss_Seidel') { 
         finalMethodID = 'Gauss_Seidel';
     }
+     else if(this.selectedMethod === 'Gauss_Jordan') {
+       finalMethodID = 'Gauss_Jordan';
+    }
     else{
       if(this.withscaling){
         finalMethodID = 'Gauss_elimination_Pivoting_Scaling';

@@ -4,7 +4,7 @@ from response import addsteps,Steps,PivotIndex
 from typing_extensions import List
 # ! forward elimination (with pivoting and scalling)
 # modify in original matrix
-def forward_elimination_withPivoting_and_scaling(size, matrix, vector_of_sol, steps: List['Steps']) -> str|None:
+def forward_elimination_withPivoting_and_scaling(size, matrix, vector_of_sol, steps: List['Steps'],flops) -> str|None:
     # Loop over pivots (except last row)
     for pivot in range(size-1):
         # --- 1. Partial Pivoting (Find largest ABSOLUTE magnitude) ---
@@ -41,6 +41,7 @@ def forward_elimination_withPivoting_and_scaling(size, matrix, vector_of_sol, st
             vector_of_sol[pivot] = vector_of_sol[max_row_index]
             vector_of_sol[max_row_index] = dummy_b
             addsteps(steps,f"sawp R{pivot+1} with R{max_row_index+1}",matrix,vector_of_sol,pivotIndex={"r":pivot,"c":pivot},highlightRow=max_row_index)
+            flops += 1
         # rup == rows under pivot <-- row
         for rup in range(pivot+1, size):
             # m == multiplier
@@ -50,12 +51,13 @@ def forward_elimination_withPivoting_and_scaling(size, matrix, vector_of_sol, st
                 matrix[rup][eir] = matrix[rup][eir] - m * matrix[pivot][eir]
             vector_of_sol[rup] = vector_of_sol[rup] - m * vector_of_sol[pivot]
             addsteps(steps,f"R{rup+1} = R{rup+1}-({m}) * R{pivot+1} (Elimination)",matrix,vector_of_sol,pivotIndex={"r":pivot,"c":pivot},highlightRow=rup)
+            flops += 1
     return None
         
 
 # ! forward elimination (with pivoting)
 # modify in original matrix
-def forward_elimination_withPivoting(size, matrix, vector_of_sol,steps:List['Steps']) -> str|None:
+def forward_elimination_withPivoting(size, matrix, vector_of_sol,steps:List['Steps'],flops) -> str|None:
     # Loop over pivots (except last row)
 
     for pivot in range(size-1):
@@ -89,6 +91,7 @@ def forward_elimination_withPivoting(size, matrix, vector_of_sol,steps:List['Ste
             vector_of_sol[pivot] = vector_of_sol[max_row_index]
             vector_of_sol[max_row_index] = dummy_b
             addsteps(steps,f"sawp R{pivot+1} with R{max_row_index+1}",matrix,vector_of_sol,pivotIndex={"r":pivot,"c":pivot},highlightRow=max_row_index)
+            flops += 1
         else:
             addsteps(steps,"there is no need for pivoting as the largest pivot is in the correct position",matrix,vector_of_sol)
         # rup == rows under pivot <-- row
@@ -100,12 +103,13 @@ def forward_elimination_withPivoting(size, matrix, vector_of_sol,steps:List['Ste
                 matrix[rup][eir] = matrix[rup][eir] - m * matrix[pivot][eir]
             vector_of_sol[rup] = vector_of_sol[rup] - m * vector_of_sol[pivot]
             if(m != 0):
+                flops += 1
                 addsteps(steps,f"R{rup+1} = R{rup+1}-({m}) * R{pivot+1} (Elimination)",matrix,vector_of_sol,pivotIndex={"r":pivot,"c":pivot},highlightRow=rup)
     return None
 
 # ! forward elimination (without pivoting) & store multipliers
 # modify in original matrix
-def forward_elimination_withoutPivoting(size, matrix, vector_of_sol,steps:List['Steps'])-> str|None:
+def forward_elimination_withoutPivoting(size, matrix, vector_of_sol,steps:List['Steps'],flops)-> str|None:
     array_of_multipliers = []
     # Loop over pivots (except last row)
     for pivot in range(size-1):
@@ -123,13 +127,15 @@ def forward_elimination_withoutPivoting(size, matrix, vector_of_sol,steps:List['
                 matrix[rup][eir] = matrix[rup][eir] - m * matrix[pivot][eir]
             vector_of_sol[rup] = vector_of_sol[rup] - m * vector_of_sol[pivot]
             addsteps(steps,f"R{rup+1} = R{rup+1}-({m}) * R{pivot+1} (Elimination)",matrix,vector_of_sol,pivotIndex={"r":pivot,"c":pivot},highlightRow=rup)
+            flops += 1
     return None
 
 # ! backward substitution
-def backward_substitution(size, matrix, vector_of_sol,steps:List['Steps']):
+def backward_substitution(size, matrix, vector_of_sol,steps:List['Steps'],flops):
     vector_of_unknowns = [None for _ in range(size)] 
     vector_of_unknowns[size - 1] = vector_of_sol[size - 1] / matrix[size - 1][size - 1]  # find value of last unknown
     addsteps(steps,f"X{size} = {vector_of_sol[size - 1]} / {matrix[size - 1][size - 1]} = {vector_of_unknowns[size - 1]}",matrix,vector_of_unknowns)
+    flops += 1
     for pivot in range(size - 2, -1, -1):
         # s == sum
         s = 0
@@ -140,6 +146,7 @@ def backward_substitution(size, matrix, vector_of_sol,steps:List['Steps']):
             vector_of_sol[pivot] - s) / matrix[pivot][pivot]
         numerator = vector_of_sol[pivot] - s
         addsteps(steps,f"X{pivot+1} = ({numerator}) / {matrix[pivot][pivot]} = {vector_of_unknowns[pivot]}",matrix,vector_of_unknowns)
+        flops += 1
     return vector_of_unknowns
 
 def check_diagonally_dominant(size,vector_of_sol ,matrix,steps:List['Steps']):
@@ -169,7 +176,7 @@ def check_havesol(size,vector_of_sol,matrix,steps:List['Steps']) -> bool:
         return "Infinite"
     addsteps(steps,"has a unique solution ",matrix,vector_of_sol)
     return "unique"
-def backward_elimination(size,vector_of_sol,matrix,steps:List['Steps']):
+def backward_elimination(size,vector_of_sol,matrix,steps:List['Steps'],flops):
     vector_of_sol[size-1] = vector_of_sol[size-1]/matrix[size-1][size-1]
     matrix[size-1][size-1] = 1
     for pivot in range(size-1,-1,-1):
@@ -180,8 +187,9 @@ def backward_elimination(size,vector_of_sol,matrix,steps:List['Steps']):
                 matrix[rup][eir] -= m*matrix[pivot][eir]
             vector_of_sol[rup]-=m* vector_of_sol[pivot]
             if(m != Decimal("0")):
+                flops += 1
                 addsteps(steps,f"R{rup+1} = R{rup+1} - ({m}) * R{pivot+1}",matrix,vector_of_sol,pivotIndex={"r":pivot,"c":pivot},highlightRow=rup)
-def normalize_matrix(size,vector_of_sol,matrix,steps:List['Steps']):
+def normalize_matrix(size,vector_of_sol,matrix,steps:List['Steps'],flops):
     for i in range(size):
         pivot_value = matrix[i][i]
         
@@ -197,5 +205,5 @@ def normalize_matrix(size,vector_of_sol,matrix,steps:List['Steps']):
         
         # Tracking: Log the normalization
         addsteps(steps,f"Normalized R{i+1} by dividing by pivot ({pivot_value})",matrix, vector_of_sol)
-        
+        flops += 1
     return None # Success

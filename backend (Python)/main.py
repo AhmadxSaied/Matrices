@@ -24,12 +24,13 @@ class Item(BaseModel):
 # +++++++++++++++++++++++++++++++++++++++++++++
 # ! Naive gauss elimination
 def Naive_gauss_elimination(item: Item,all_steps:List['Steps']):
+    flops=0
     print(item)
     start_time = time.perf_counter()
     A_copy = copy.deepcopy(item.matrix)
     B_copy = item.vector_of_sol[:]
     getcontext().prec = item.precision if item.precision is not None else 10
-    if helper.forward_elimination_withoutPivoting(item.size, A_copy, B_copy,all_steps) == "error":
+    if helper.forward_elimination_withoutPivoting(item.size, A_copy, B_copy,all_steps,flops) == "error":
         end_time = time.perf_counter()
         return Response("Error",[],round(end_time-start_time,6),0,all_steps,"Singluar matrix or division by zero ")
     status = helper.check_havesol(item.size,B_copy,A_copy,all_steps)
@@ -41,17 +42,18 @@ def Naive_gauss_elimination(item: Item,all_steps:List['Steps']):
         else:
             return Response("Error",[],round(end_time-start_time,6),0,all_steps,"the system has Infinite number of solution")
     print(item.matrix)
-    vector_of_unknowns = helper.backward_substitution(item.size, A_copy,B_copy,all_steps)
+    vector_of_unknowns = helper.backward_substitution(item.size, A_copy,B_copy,all_steps,flops)
     end_time = time.perf_counter()
-    return Response("SUCCESS",vector_of_unknowns,round(end_time - start_time,6),0,all_steps,"")
+    return Response("SUCCESS",vector_of_unknowns,round(end_time - start_time,6),flops,all_steps,"")
 
 # ! Gauss Elimination with Partial Pivoting
 def Gauss_elimination_with_partial_pivoting(item: Item,all_steps:List['Steps']):
     start_time = time.perf_counter()
+    flops=0
     A_copy = copy.deepcopy(item.matrix)
     B_copy = item.vector_of_sol[:]
     getcontext().prec = item.precision if item.precision is not None else 10
-    if helper.forward_elimination_withPivoting(item.size, A_copy, B_copy,all_steps) == "error":
+    if helper.forward_elimination_withPivoting(item.size, A_copy, B_copy,all_steps,flops) == "error":
         end_time = time.perf_counter()
         return Response("Error",[],round(end_time-start_time,6),0,all_steps,"Singluar matrix")
     status = helper.check_havesol(item.size,B_copy,A_copy,all_steps)
@@ -62,16 +64,17 @@ def Gauss_elimination_with_partial_pivoting(item: Item,all_steps:List['Steps']):
         else:
             return Response("Error",[],round(end_time-start_time,6),0,all_steps,"the system has Infinite number of solution")
     end_time = time.perf_counter()
-    vector_of_unknowns = helper.backward_substitution(item.size, A_copy, B_copy,all_steps)
-    return Response("SUCCESS",vector_of_unknowns,round(end_time - start_time,6),0,all_steps,"")
+    vector_of_unknowns = helper.backward_substitution(item.size, A_copy, B_copy,all_steps,flops)
+    return Response("SUCCESS",vector_of_unknowns,round(end_time - start_time,6),flops,all_steps,"")
 
 # ! Gauss Elimination with Partial Pivoting and scaling
 def Gauss_elimination_with_partial_pivoting_and_scaling(item: Item,all_steps:List['Steps']):
     start_time = time.perf_counter()
+    flops=0
     A_copy = copy.deepcopy(item.matrix)
     B_copy = item.vector_of_sol[:]
     getcontext().prec = item.precision if item.precision is not None else 10
-    if helper.forward_elimination_withPivoting_and_scaling(item.size, A_copy, B_copy,all_steps) == "error":
+    if helper.forward_elimination_withPivoting_and_scaling(item.size, A_copy, B_copy,all_steps,flops) == "error":
        end_time = time.perf_counter()
        return Response("Error",[],round(end_time-start_time,6),0,all_steps,"Singluar matrix")
     status = helper.check_havesol(item.size,B_copy,A_copy,all_steps)
@@ -81,15 +84,16 @@ def Gauss_elimination_with_partial_pivoting_and_scaling(item: Item,all_steps:Lis
             return Response("Error",[],round(end_time-start_time,6),0,all_steps,"the system has no solution")
         else:
             return Response("Error",[],round(end_time-start_time,6),0,all_steps,"the system has Infinite number of solution")
-    vector_of_unknowns = helper.backward_substitution(item.size, A_copy, B_copy,all_steps)
+    vector_of_unknowns = helper.backward_substitution(item.size, A_copy, B_copy,all_steps,flops)
     end_time = time.perf_counter()
     return Response("SUCCESS",vector_of_unknowns,round(end_time - start_time,6),0,all_steps,"")
 
 # ! Gauss-Jordan elimination (with partial pivoting)
 def Gauss_Jordan_elimination(item: Item,all_steps:List['Steps']):
     start_time = time.perf_counter()
+    flops=0
     getcontext().prec = item.precision if item.precision is not None else 10
-    error_status = helper.forward_elimination_withPivoting(item.size,item.matrix,item.vector_of_sol,all_steps)
+    error_status = helper.forward_elimination_withPivoting(item.size,item.matrix,item.vector_of_sol,all_steps,flops)
     if error_status == "error":
         end_time = time.perf_counter()
         return Response("Error",[],round(end_time-start_time,6),0,all_steps,"Singluar matrix")
@@ -100,10 +104,10 @@ def Gauss_Jordan_elimination(item: Item,all_steps:List['Steps']):
             return Response("Error", [], round(end_time - start_time, 6), 0, all_steps, "the system has no solution")
         else:
             return Response("Error", [], round(end_time - start_time, 6), 0, all_steps,"the system has Infinite number of solution")
-    helper.normalize_matrix(item.size,item.vector_of_sol,item.matrix,all_steps)
-    helper.backward_elimination(item.size,item.vector_of_sol,item.matrix, all_steps)
+    helper.normalize_matrix(item.size,item.vector_of_sol,item.matrix,all_steps,flops)
+    helper.backward_elimination(item.size,item.vector_of_sol,item.matrix, all_steps,flops)
     end_time = time.perf_counter()
-    return Response("SUCCESS",item.vector_of_sol,round(end_time-start_time,6),0,all_steps,"")
+    return Response("SUCCESS",item.vector_of_sol,round(end_time-start_time,6),flops,all_steps,"")
 
 # ! Gauss-Seidel Method (without pivoting)
 def Gauss_Seidel_method(item: Item,all_steps:List['Steps']):
@@ -237,7 +241,7 @@ def LU_decomposition_Doolittle_method(item: Item, all_steps: List["Steps"]):
     timer_start = time.perf_counter()
 
     n = item.size
-
+    flops=0
     # Initialize L as identity and U as a copy of A
     L = [[Decimal("0") for _ in range(n)] for _ in range(n)]
     U = [[item.matrix[i][j] for j in range(n)] for i in range(n)]
@@ -269,7 +273,7 @@ def LU_decomposition_Doolittle_method(item: Item, all_steps: List["Steps"]):
             addsteps(all_steps,
                      f"L{j+1}{i+1} = A{j+1}{i+1} / A{i+1}{i+1} = {multiplier}",
                      L, item.vector_of_sol, L, U,None,pivotIndex={"r":i,"c":i},highlightRow=j)
-
+            flops += 1
             # Update row j in U
             for k in range(i, n):
                 old_value = U[j][k]
@@ -278,13 +282,13 @@ def LU_decomposition_Doolittle_method(item: Item, all_steps: List["Steps"]):
             addsteps(all_steps,
                      f"U{j+1} = U{j+1} - ({multiplier}) * U{i+1}",
                      U, item.vector_of_sol, L, U,pivotIndex={"r":i,"c":i},highlightRow=j)
-
+            flops += 1
     # ---------------------------
     #  Step 2: Forward Substitution (Ly = b)
     # ---------------------------
     addsteps(all_steps, "Solving Ly=b using forward substitution", L,
              item.vector_of_sol, L, U)
-
+    flops += 1
     y = [Decimal("0") for _ in range(n)]
     for i in range(n):
         sum_y = sum(L[i][j] * y[j] for j in range(i))
@@ -292,7 +296,7 @@ def LU_decomposition_Doolittle_method(item: Item, all_steps: List["Steps"]):
         addsteps(all_steps,
                  f"y{i+1} = b{i+1} - {sum_y}",
                  L, y, L, U,pivotIndex={"r":i,"c":i},highlightRow=i)
-
+        flops += 1
     # ---------------------------
     #  Step 3: Backward Substitution (Ux = y)
     # ---------------------------
@@ -311,10 +315,10 @@ def LU_decomposition_Doolittle_method(item: Item, all_steps: List["Steps"]):
         addsteps(all_steps,
                  f"X{i+1} = (y{i+1} - {sum_x}) / U{i+1}{i+1}",
                  U, x, L, U,pivotIndex={"r":i,"c":i},highlightRow=i)
-
+        flops += 1
     timer_stop = time.perf_counter()
     return Response("SUCCESS", x, round(timer_stop - timer_start, 6),
-                    item.max_iterations, all_steps,"",L,U)
+                    flops, all_steps,"",L,U)
 
 # ! LU Decomposition Method (Crout's Method)
 # def LU_decomposition_Crout_method(item: Item,all_steps:List['Steps']):
@@ -380,7 +384,7 @@ def LU_decomposition_Doolittle_method(item: Item, all_steps: List["Steps"]):
 def LU_decomposition_Crout_method(item: Item, all_steps: List['Steps']):
     timer_start = time.perf_counter()
     getcontext().prec = item.precision if item.precision is not None else 10
-
+    flops=0
     n = item.size
 
     # Initialize L and U
@@ -399,7 +403,7 @@ def LU_decomposition_Crout_method(item: Item, all_steps: List['Steps']):
     for i in range(n):
         L[i][0] = A[i][0]
         addsteps(all_steps, f"L[{i+1}][1] = A[{i+1}][1]", L, item.vector_of_sol, L, U,pivotIndex={"r":i,"c":0})
-
+        flops+=1
     # --------------------------
     # Step 2: First row of U
     # --------------------------
@@ -409,7 +413,7 @@ def LU_decomposition_Crout_method(item: Item, all_steps: List['Steps']):
     for j in range(1, n):
         U[0][j] = A[0][j] / L[0][0]
         addsteps(all_steps, f"U[1][{j+1}] = A[1][{j+1}] / L[1][1]", U, item.vector_of_sol, L, U,pivotIndex={"r":0,"c":j})
-
+        flops += 1
     # --------------------------
     # Step 3: For columns j = 2..n-1
     # --------------------------
@@ -423,7 +427,7 @@ def LU_decomposition_Crout_method(item: Item, all_steps: List['Steps']):
 
             L[i][j] = A[i][j] - sum_l
             addsteps(all_steps, f"L[{i+1}][{j+1}] = A[{i+1}][{j+1}] - {sum_l}", L, item.vector_of_sol, L, U,pivotIndex={"r":i,"c":j})
-
+            flops += 1
         # ---- Compute U[j][k] for k=j+1..n ----
         if L[j][j] == 0:
             return Response("ERROR", item.vector_of_sol, 0, 0, all_steps,
@@ -438,7 +442,7 @@ def LU_decomposition_Crout_method(item: Item, all_steps: List['Steps']):
             addsteps(all_steps,
                      f"U[{j+1}][{k+1}] = (A[{j+1}][{k+1}] - {sum_u}) / L[{j+1}][{j+1}]",
                      U, item.vector_of_sol, L, U,pivotIndex={"r":j,"c":k})
-
+            flops += 1
     # --------------------------
     # Step 4: Compute the last L[n-1][n-1]
     # --------------------------
@@ -450,7 +454,7 @@ def LU_decomposition_Crout_method(item: Item, all_steps: List['Steps']):
     addsteps(all_steps,
              f"L[{n}][{n}] = A[{n}][{n}] - {sum_last}",
              L, item.vector_of_sol, L, U,pivotIndex={"r":n-1,"c":n-1})
-
+    flops += 1
     # --------------------------
     # Step 5: Forward substitution Ly = b
     # --------------------------
@@ -466,7 +470,7 @@ def LU_decomposition_Crout_method(item: Item, all_steps: List['Steps']):
 
         y[i] = (item.vector_of_sol[i] - s) / L[i][i]
         addsteps(all_steps, f"y[{i+1}] = (b[{i+1}] - {s}) / L[{i+1}][{i+1}]", L, y, L, U,pivotIndex={"r":i,"c":i})
-
+        flops += 1
     # --------------------------
     # Step 6: Backward substitution Ux = y
     # --------------------------
@@ -479,10 +483,10 @@ def LU_decomposition_Crout_method(item: Item, all_steps: List['Steps']):
 
         x[i] = y[i] - s  # since U[i][i] = 1
         addsteps(all_steps, f"x[{i+1}] = y[{i+1}] - {s}", U, x, L, U,pivotIndex={"r":i,"c":i})
-
+        flops += 1
     timer_end = time.perf_counter()
     return Response("SUCCESS", x, round(timer_end - timer_start, 6),
-                    item.max_iterations, all_steps, "", L, U)
+                    flops, all_steps, "", L, U)
 
 
 # ! LU Decomposition Method (Cholesky's Method)
@@ -589,7 +593,7 @@ def LU_decomposition_Cholesky_method(item: Item, all_steps: List['Steps']):
 
     # Create L matrix full of zeros
     L = [[Decimal("0") for _ in range(n)] for _ in range(n)]
-
+    flops=0
     # -------------------------------
     # STEP 1 — Cholesky Factorization
     # -------------------------------
@@ -617,7 +621,7 @@ def LU_decomposition_Cholesky_method(item: Item, all_steps: List['Steps']):
         addsteps(all_steps,
                  f"L({i},{i}) = √( A({i},{i}) - {sum_sq} )",
                  L, item.vector_of_sol, L,pivotIndex={"r":i,"c":i},highlightRow=i)
-
+        flops += 1
         # ---- Compute L[k][i] for k=i+1 .. n ----
         for k in range(i+1, n):
             # l_ki = ( a_ki − Σ(l_kj * l_ij) ) / l_ii
@@ -630,7 +634,7 @@ def LU_decomposition_Cholesky_method(item: Item, all_steps: List['Steps']):
             addsteps(all_steps,
                      f"L({k},{i}) = ( A({k},{i}) − {sum_prod} ) / L({i},{i})",
                      L, item.vector_of_sol, L,pivotIndex={"r":k,"c":i})
-
+            flops += 1
     # -------------------------------
     # STEP 2 — Forward substitution Ly = b
     # -------------------------------
@@ -645,7 +649,7 @@ def LU_decomposition_Cholesky_method(item: Item, all_steps: List['Steps']):
         addsteps(all_steps,
                  f"y({i}) = ( b({i}) − {s} ) / L({i},{i})",
                  L, y, L,pivotIndex={"r":i,"c":i},highlightRow=i)
-
+        flops += 1
     # -------------------------------
     # STEP 3 — Backward substitution L^T x = y
     # -------------------------------
@@ -660,7 +664,7 @@ def LU_decomposition_Cholesky_method(item: Item, all_steps: List['Steps']):
         addsteps(all_steps,
                  f"x({i}) = ( y({i}) − {s} ) / L({i},{i})",
                  L, x, L,pivotIndex={"r":i,"c":i},highlightRow=i)
-
+        flops += 1
     timer_end = time.perf_counter()
     return Response("SUCCESS", x,
-                    round(timer_end - timer_start, 6), 0, all_steps, "", L)
+                    round(timer_end - timer_start, 6), flops, all_steps, "", L)

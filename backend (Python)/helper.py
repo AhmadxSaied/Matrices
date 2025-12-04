@@ -1,7 +1,7 @@
 from decimal import Decimal, getcontext
 from pydantic import BaseModel
 from response import addsteps,Steps,PivotIndex
-from typing import List
+from typing_extensions import List
 # ! forward elimination (with pivoting and scalling)
 # modify in original matrix
 def forward_elimination_withPivoting_and_scaling(size, matrix, vector_of_sol, steps: List['Steps']) -> str|None:

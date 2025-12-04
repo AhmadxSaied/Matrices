@@ -3,7 +3,7 @@ from pydantic import BaseModel
 import time
 from response import Response,Steps,addsteps
 import helper
-from typing import List
+from typing_extensions import List
 import copy
 
 # Defines the structure of the JSON data we expect to receive.
@@ -228,9 +228,9 @@ def Jacobi_method(item: Item,all_steps:List['Steps']):
         if max_relative_error < item.Tolerance:
             # Convergence achieved
             timer_stop = time.perf_counter()
-            return Response("SUCCESS",values_of_unknowns,round(timer_stop - timer_start,6),iteration,all_steps,"",Diagonal=diagonl)
+            return Response("SUCCESS",values_of_unknowns,round(timer_stop - timer_start,6),iteration,all_steps,"",Diagonal=diagonl,equations=equa)
     timer_stop = time.perf_counter()
-    return Response("Error",values_of_unknowns,round(timer_stop-timer_start,6),item.max_iterations,all_steps,f"error: Did not converge within {item.max_iterations} iterations. Final error: {max_relative_error}",Diagonal=diagonl)
+    return Response("Error",values_of_unknowns,round(timer_stop-timer_start,6),item.max_iterations,all_steps,f"error: Did not converge within {item.max_iterations} iterations. Final error: {max_relative_error}",Diagonal=diagonl,equations=equa)
 
 def LU_decomposition_Doolittle_method(item: Item, all_steps: List["Steps"]):
     getcontext().prec = item.precision if item.precision is not None else 10
@@ -248,6 +248,7 @@ def LU_decomposition_Doolittle_method(item: Item, all_steps: List["Steps"]):
     # ---------------------------
     #  Step 1: Forward Elimination
     # ---------------------------
+    flag = False
     for i in range(n - 1):  # pivot row
         if U[i][i] == 0:
             for j in range(i+1,n-1):
@@ -265,10 +266,9 @@ def LU_decomposition_Doolittle_method(item: Item, all_steps: List["Steps"]):
         for j in range(i + 1, n):  # eliminate rows below
             multiplier = U[j][i] / U[i][i]
             L[j][i] = multiplier
-
             addsteps(all_steps,
-                     f"L{j}{i} = A{j}{i} / A{i}{i} = {multiplier}",
-                     item.matrix, item.vector_of_sol, L, U)
+                     f"L{j+1}{i+1} = A{j+1}{i+1} / A{i+1}{i+1} = {multiplier}",
+                     L, item.vector_of_sol, L, U,None,pivotIndex={"r":i,"c":i},highlightRow=j)
 
             # Update row j in U
             for k in range(i, n):
@@ -276,8 +276,8 @@ def LU_decomposition_Doolittle_method(item: Item, all_steps: List["Steps"]):
                 U[j][k] = U[j][k] - multiplier * U[i][k]
 
             addsteps(all_steps,
-                     f"R{j} = R{j} - ({multiplier}) * R{i}",
-                     item.matrix, item.vector_of_sol, L, U)
+                     f"U{j+1} = U{j+1} - ({multiplier}) * U{i+1}",
+                     U, item.vector_of_sol, L, U,pivotIndex={"r":i,"c":i},highlightRow=j)
 
     # ---------------------------
     #  Step 2: Forward Substitution (Ly = b)
@@ -290,8 +290,8 @@ def LU_decomposition_Doolittle_method(item: Item, all_steps: List["Steps"]):
         sum_y = sum(L[i][j] * y[j] for j in range(i))
         y[i] = item.vector_of_sol[i] - sum_y
         addsteps(all_steps,
-                 f"y{i} = b{i} - {sum_y}",
-                 item.matrix, y, L, U)
+                 f"y{i+1} = b{i+1} - {sum_y}",
+                 L, y, L, U,pivotIndex={"r":i,"c":i},highlightRow=i)
 
     # ---------------------------
     #  Step 3: Backward Substitution (Ux = y)
@@ -309,8 +309,8 @@ def LU_decomposition_Doolittle_method(item: Item, all_steps: List["Steps"]):
         x[i] = (y[i] - sum_x) / U[i][i]
 
         addsteps(all_steps,
-                 f"x{i} = (y{i} - {sum_x}) / U{i}{i}",
-                 U, x, L, U)
+                 f"X{i+1} = (y{i+1} - {sum_x}) / U{i+1}{i+1}",
+                 U, x, L, U,pivotIndex={"r":i,"c":i},highlightRow=i)
 
     timer_stop = time.perf_counter()
     return Response("SUCCESS", x, round(timer_stop - timer_start, 6),
@@ -398,7 +398,7 @@ def LU_decomposition_Crout_method(item: Item, all_steps: List['Steps']):
     # --------------------------
     for i in range(n):
         L[i][0] = A[i][0]
-        addsteps(all_steps, f"L[{i}][0] = A[{i}][0]", L, item.vector_of_sol, L, U)
+        addsteps(all_steps, f"L[{i+1}][1] = A[{i+1}][1]", L, item.vector_of_sol, L, U,pivotIndex={"r":i,"c":0})
 
     # --------------------------
     # Step 2: First row of U
@@ -408,7 +408,7 @@ def LU_decomposition_Crout_method(item: Item, all_steps: List['Steps']):
 
     for j in range(1, n):
         U[0][j] = A[0][j] / L[0][0]
-        addsteps(all_steps, f"U[0][{j}] = A[0][{j}] / L[0][0]", U, item.vector_of_sol, L, U)
+        addsteps(all_steps, f"U[1][{j+1}] = A[1][{j+1}] / L[1][1]", U, item.vector_of_sol, L, U,pivotIndex={"r":0,"c":j})
 
     # --------------------------
     # Step 3: For columns j = 2..n-1
@@ -422,7 +422,7 @@ def LU_decomposition_Crout_method(item: Item, all_steps: List['Steps']):
                 sum_l += L[i][k] * U[k][j]
 
             L[i][j] = A[i][j] - sum_l
-            addsteps(all_steps, f"L[{i}][{j}] = A[{i}][{j}] - {sum_l}", L, item.vector_of_sol, L, U)
+            addsteps(all_steps, f"L[{i+1}][{j+1}] = A[{i+1}][{j+1}] - {sum_l}", L, item.vector_of_sol, L, U,pivotIndex={"r":i,"c":j})
 
         # ---- Compute U[j][k] for k=j+1..n ----
         if L[j][j] == 0:
@@ -436,8 +436,8 @@ def LU_decomposition_Crout_method(item: Item, all_steps: List['Steps']):
 
             U[j][k] = (A[j][k] - sum_u) / L[j][j]
             addsteps(all_steps,
-                     f"U[{j}][{k}] = (A[{j}][{k}] - {sum_u}) / L[{j}][{j}]",
-                     U, item.vector_of_sol, L, U)
+                     f"U[{j+1}][{k+1}] = (A[{j+1}][{k+1}] - {sum_u}) / L[{j+1}][{j+1}]",
+                     U, item.vector_of_sol, L, U,pivotIndex={"r":j,"c":k})
 
     # --------------------------
     # Step 4: Compute the last L[n-1][n-1]
@@ -448,8 +448,8 @@ def LU_decomposition_Crout_method(item: Item, all_steps: List['Steps']):
 
     L[n - 1][n - 1] = A[n - 1][n - 1] - sum_last
     addsteps(all_steps,
-             f"L[{n-1}][{n-1}] = A[{n-1}][{n-1}] - {sum_last}",
-             L, item.vector_of_sol, L, U)
+             f"L[{n}][{n}] = A[{n}][{n}] - {sum_last}",
+             L, item.vector_of_sol, L, U,pivotIndex={"r":n-1,"c":n-1})
 
     # --------------------------
     # Step 5: Forward substitution Ly = b
@@ -465,7 +465,7 @@ def LU_decomposition_Crout_method(item: Item, all_steps: List['Steps']):
             return Response("ERROR", item.vector_of_sol, 0, 0, all_steps, "Singular matrix")
 
         y[i] = (item.vector_of_sol[i] - s) / L[i][i]
-        addsteps(all_steps, f"y[{i}] = (b[{i}] - {s}) / L[{i}][{i}]", L, y, L, U)
+        addsteps(all_steps, f"y[{i+1}] = (b[{i+1}] - {s}) / L[{i+1}][{i+1}]", L, y, L, U,pivotIndex={"r":i,"c":i})
 
     # --------------------------
     # Step 6: Backward substitution Ux = y
@@ -478,7 +478,7 @@ def LU_decomposition_Crout_method(item: Item, all_steps: List['Steps']):
             s += U[i][j] * x[j]
 
         x[i] = y[i] - s  # since U[i][i] = 1
-        addsteps(all_steps, f"x[{i}] = y[{i}] - {s}", U, x, L, U)
+        addsteps(all_steps, f"x[{i+1}] = y[{i+1}] - {s}", U, x, L, U,pivotIndex={"r":i,"c":i})
 
     timer_end = time.perf_counter()
     return Response("SUCCESS", x, round(timer_end - timer_start, 6),
@@ -616,7 +616,7 @@ def LU_decomposition_Cholesky_method(item: Item, all_steps: List['Steps']):
 
         addsteps(all_steps,
                  f"L({i},{i}) = √( A({i},{i}) - {sum_sq} )",
-                 L, item.vector_of_sol, L)
+                 L, item.vector_of_sol, L,pivotIndex={"r":i,"c":i},highlightRow=i)
 
         # ---- Compute L[k][i] for k=i+1 .. n ----
         for k in range(i+1, n):
@@ -629,7 +629,7 @@ def LU_decomposition_Cholesky_method(item: Item, all_steps: List['Steps']):
 
             addsteps(all_steps,
                      f"L({k},{i}) = ( A({k},{i}) − {sum_prod} ) / L({i},{i})",
-                     L, item.vector_of_sol, L)
+                     L, item.vector_of_sol, L,pivotIndex={"r":k,"c":i})
 
     # -------------------------------
     # STEP 2 — Forward substitution Ly = b
@@ -644,7 +644,7 @@ def LU_decomposition_Cholesky_method(item: Item, all_steps: List['Steps']):
 
         addsteps(all_steps,
                  f"y({i}) = ( b({i}) − {s} ) / L({i},{i})",
-                 L, y, L)
+                 L, y, L,pivotIndex={"r":i,"c":i},highlightRow=i)
 
     # -------------------------------
     # STEP 3 — Backward substitution L^T x = y
@@ -659,7 +659,7 @@ def LU_decomposition_Cholesky_method(item: Item, all_steps: List['Steps']):
 
         addsteps(all_steps,
                  f"x({i}) = ( y({i}) − {s} ) / L({i},{i})",
-                 L, x, L)
+                 L, x, L,pivotIndex={"r":i,"c":i},highlightRow=i)
 
     timer_end = time.perf_counter()
     return Response("SUCCESS", x,

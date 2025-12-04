@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Union, Dict, Any
+from typing_extensions import List, Union, Dict, Any
 from pydantic import BaseModel
 from decimal import Decimal, getcontext
 @dataclass

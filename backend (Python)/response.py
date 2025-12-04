@@ -1,6 +1,6 @@
 import decimal
 from dataclasses import dataclass
-from typing import List,TypedDict,Union
+from typing_extensions import List,TypedDict,Union
 import copy
 from decimal import Decimal, getcontext
 class PivotIndex(TypedDict):

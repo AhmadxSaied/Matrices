@@ -1,61 +1,58 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
+
 <head>
     <meta charset="UTF-8">
 </head>
-<body>
-<div class="solver-container">
-    
-    @if(!isSolved) {
-    <div id="input-container">
-        <h1>Matrix Solver</h1>
-        <p>Enter Dimensions (N):</p>
-        <div class="controls" style="flex-direction: row; gap: 10px;">
-            <input  id = "ndim" class="puzzle-cell" type="number" [(ngModel)]="NumberEquations" 
-                  placeholder="N" min="1" 
-                  style="width: 80px; text-align: center; padding: 10px; border-radius: 10px; border: none;">
-            <button (click)="gridGenerator()">START</button>
-        </div>
-    </div>
 
-    @if(isGenerated) {
+<body>
+    <div class="solver-container">
+
+        @if(!isSolved) {
+        <div id="input-container">
+            <h1>Matrix Solver</h1>
+            <p>Enter Dimensions (N):</p>
+            <div class="controls" style="flex-direction: row; gap: 10px;">
+                <input id="ndim" class="puzzle-cell" type="number" [(ngModel)]="NumberEquations" placeholder="N" min="1"
+                    style="width: 80px; text-align: center; padding: 10px; border-radius: 10px; border: none;">
+                <button (click)="gridGenerator()">START</button>
+            </div>
+        </div>
+
+        @if(isGenerated) {
         <div id="display-container" style="display: block; margin-top: 20px;">
             <h2>Enter Coefficients (A | B)</h2>
             <div class="puzzle-grid" [style.grid-template-columns]="'repeat(' + (NumberEquations! + 1) + ', 1fr)'">
-                
+
                 @for(row of matrixA; track row; let i = $index) {
-                    @for(col of row; track col; let j = $index) {
-                        <input type="number" [(ngModel)]="matrixA[i][j]" 
-                        [ngModelOptions]="{updateOn: 'blur'}"
-                        class="puzzle-cell" inputmode="decimal" autocomplete="off" step="any"
-                        [class.invalid] = "showError && (matrixA[i][j] === null || matrixA[i][j] === undefined)"
-                        [class.valid] = "matrixA[i][j] != null || matrixA[i][j] != undefined"
-                        placeholder="A({{i+1}})({{j+1}})">
-                    }
-                    
-                    <input type="number" [(ngModel)]="matrixB[i]" 
-                            [ngModelOptions]="{updateOn: 'blur'}"
-                            class="puzzle-cell" inputmode="decimal" autocomplete="off" step="any"
-                            style="border-color: var(--primary-color);" 
-                        [class.invalid] = "showError && (matrixB[i] === null || matrixB[i] === undefined)"
-                        [class.valid] = "matrixB[i] != null || matrixB[i] != undefined"
-                            placeholder="B{{i+1}}">
+                @for(col of row; track col; let j = $index) {
+                <input type="number" [(ngModel)]="matrixA[i][j]" [ngModelOptions]="{updateOn: 'blur'}"
+                    class="puzzle-cell" inputmode="decimal" autocomplete="off" step="any"
+                    [class.invalid]="showError && (matrixA[i][j] === null || matrixA[i][j] === undefined)"
+                    [class.valid]="matrixA[i][j] != null || matrixA[i][j] != undefined"
+                    placeholder="A({{i+1}})({{j+1}})">
+                }
+
+                <input type="number" [(ngModel)]="matrixB[i]" [ngModelOptions]="{updateOn: 'blur'}" class="puzzle-cell"
+                    inputmode="decimal" autocomplete="off" step="any" style="border-color: var(--primary-color);"
+                    [class.invalid]="showError && (matrixB[i] === null || matrixB[i] === undefined)"
+                    [class.valid]="matrixB[i] != null || matrixB[i] != undefined" placeholder="B{{i+1}}">
                 }
             </div>
 
             <div class="controls">
                 <select [(ngModel)]="selectedMethod" class="select-method">
                     @for(m of methods; track m.id) {
-                        <option [value]="m.id">{{ m.name }}</option>
+                    <option [value]="m.id">{{ m.name }}</option>
                     }
                 </select>
 
                 @if(selectedMethod === 'LU') {
-                    <select [(ngModel)]="luForm">
-                        <option value="DOOLITTLE">Doolittle</option>
-                        <option value="CROUT">Crout</option>
-                        <option value="CHOLESKY">Cholesky</option>
-                    </select>
+                <select [(ngModel)]="luForm">
+                    <option value="DOOLITTLE">Doolittle</option>
+                    <option value="CROUT">Crout</option>
+                    <option value="CHOLESKY">Cholesky</option>
+                </select>
                 }
 
 
@@ -64,16 +61,16 @@
                 <button id="solve-button" (click)="solve()">SOLVE</button>
             </div>
         </div>
-    }
-    }
+        }
+        }
 
-    @if(isSolved && solutionData) {
-        
+        @if(isSolved && solutionData) {
+
         <div id="results-dashboard" class="animate-up">
             @if (solutionData.errorMessage ){
-                <h1><span style="color:var(--error-color)">⨯</span> Solution not Found</h1>
+            <h1><span style="color:var(--error-color)">⨯</span> Solution not Found</h1>
             } @else {
-                <h1><span style="color:var(--success-color)">✔</span> Solution Found</h1>
+            <h1><span style="color:var(--success-color)">✔</span> Solution Found</h1>
             }
 
             <div class="metrics-container">
@@ -88,9 +85,9 @@
                 <div class="metric-card">
                     <span class="label">Status</span>
                     @if (solutionData.errorMessage){
-                        <span class="value" style="color: var(--error-color)">Didnt Converge</span>
+                    <span class="value" style="color: var(--error-color)">Didnt Converge</span>
                     } @else {
-                        <span class="value" style="color: var(--success-color)">Optimal</span>
+                    <span class="value" style="color: var(--success-color)">Optimal</span>
                     }
                 </div>
             </div>
@@ -99,220 +96,222 @@
                 <h3>Final Result Vector (X)</h3>
                 <div class="vector-grid">
                     @for(res of solutionData.results; track res; let i = $index) {
-                        <div class="vector-item">
-                            <span class="var-name">X<sub>{{i+1}}</sub></span>
-                            <span class="var-value">{{ res | number:'1.0-4' }}</span>
-                        </div>
+                    <div class="vector-item">
+                        <span class="var-name">X<sub>{{i+1}}</sub></span>
+                        <span class="var-value">{{ res }}</span>
+                    </div>
                     }
                 </div>
 
-                    @if(currentMatrixL && currentMatrixU) {
-                        <div class="lu-container animate-up">
-                            
-                            <div class="matrix-wrapper">
-                                <h3 style="color: var(--accent-color); margin-bottom: 10px;">Lower (L)</h3>
-                                <div class="puzzle-grid" 
-                                     [style.grid-template-columns]="'repeat(' + NumberEquations + ', 1fr)'"
-                                     style="margin: 0;"> 
-                                    @for(row of currentMatrixL; track row) {
-                                        @for(val of row; track val) {
-                                            <div class="puzzle-cell" style="cursor: default;">
-                                                {{ val | number:'1.0-2' }}
-                                            </div>
-                                        }
-                                    }
-                                </div>
+                @if(currentMatrixL && currentMatrixU) {
+                <div class="lu-container animate-up">
+
+                    <div class="matrix-wrapper">
+                        <h3 style="color: var(--accent-color); margin-bottom: 10px;">Lower (L)</h3>
+                        <div class="puzzle-grid" [style.grid-template-columns]="'repeat(' + NumberEquations + ', 1fr)'"
+                            style="margin: 0;">
+                            @for(row of currentMatrixL; track row) {
+                            @for(val of row; track val) {
+                            <div class="puzzle-cell" style="cursor: default;">
+                                <span class="cell-value">{{ val }}</span>
                             </div>
-                    
-                            <div class="lu-separator">×</div>
-                    
-                            <div class="matrix-wrapper">
-                                <h3 style="color: var(--primary-color); margin-bottom: 10px;">Upper (U)</h3>
-                                <div class="puzzle-grid" 
-                                     [style.grid-template-columns]="'repeat(' + NumberEquations + ', 1fr)'"
-                                     style="margin: 0;">
-                                    @for(row of currentMatrixU; track row) {
-                                        @for(val of row; track val) {
-                                            <div class="puzzle-cell" style="cursor: default;">
-                                                {{ val | number:'1.0-2' }}
-                                            </div>
-                                        }
-                                    }
-                                </div>
-                            </div>
-                    
+                            }
+                            }
                         </div>
-                    }
+                    </div>
+
+                    <div class="lu-separator">×</div>
+
+                    <div class="matrix-wrapper">
+                        <h3 style="color: var(--primary-color); margin-bottom: 10px;">Upper (U)</h3>
+                        <div class="puzzle-grid" [style.grid-template-columns]="'repeat(' + NumberEquations + ', 1fr)'"
+                            style="margin: 0;">
+                            @for(row of currentMatrixU; track row) {
+                            @for(val of row; track val) {
+                            <div class="puzzle-cell" style="cursor: default;">
+                                <span class="cell-value">{{ val }}</span>
+                            </div>
+                            }
+                            }
+                        </div>
+                    </div>
+
+                </div>
+                }
             </div>
 
             <div class="controls" style="margin-top: 30px;">
                 @if(!showSteps) {
-                    <button (click)="viewSteps()" style="background: var(--accent-color); color: #000;">
-                        Show Detailed Steps
-                    </button>
+                <button (click)="viewSteps()" style="background: var(--accent-color); color: #000;">
+                    Show Detailed Steps
+                </button>
                 }
-                <button (click)="isSolved = false" style="background: transparent; border: 1px solid var(--border-color); color: white">
+                <button (click)="isSolved = false"
+                    style="background: transparent; border: 1px solid var(--border-color); color: white">
                     New Problem
                 </button>
             </div>
         </div>
 
         @if(showSteps) {
-            <div id="display-container" style="display: block; margin-top: 40px; border-top: 1px solid var(--border-color); padding-top: 30px;" class="animate-up">
-                
-                @if(selectedMethod != "Gauss_Seidel" && selectedMethod != "JACOBI"){
+        <div id="display-container"
+            style="display: block; margin-top: 40px; border-top: 1px solid var(--border-color); padding-top: 30px;"
+            class="animate-up">
 
-                    <h2>Step-by-Step Solution</h2>
+            @if(selectedMethod != "Gauss_Seidel" && selectedMethod != "JACOBI"){
 
-                    <div class="results-panel" style="margin-bottom: 15px; text-align: center;">
-                        <h3 style="color: var(--accent-color); margin: 0;">
-                            Step {{currentStepIndex+1}} / {{solutionData.steps.length}}
-                        </h3>
-                        <p class="step-description" [innerHTML]="solutionData.steps[currentStepIndex].description">
-                        </p>
-                        
-                        <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 15px; overflow: hidden;">
-                            <div [style.width]="progressPercentage+'%'" 
-                            style="height: 100%; background: greenyellow; transition: width 0.3s ease;">
-                            </div>
-                        </div>
+            <h2>Step-by-Step Solution</h2>
+
+            <div class="results-panel" style="margin-bottom: 15px; text-align: center;">
+                <h3 style="color: var(--accent-color); margin: 0;">
+                    Step {{currentStepIndex+1}} / {{solutionData.steps.length}}
+                </h3>
+                <p class="step-description" [innerHTML]="solutionData.steps[currentStepIndex].description">
+                </p>
+
+                <div
+                    style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 15px; overflow: hidden;">
+                    <div [style.width]="progressPercentage+'%'"
+                        style="height: 100%; background: greenyellow; transition: width 0.3s ease;">
                     </div>
+                </div>
+            </div>
 
-                    <div class="puzzle-grid" [style.grid-template-columns]="'repeat(' + (NumberEquations! + 1) + ', 1fr)'">
-                        @for(row of currentMatrixADisplay; track row; let i = $index) {
-                            @for(val of row; track val; let j = $index) {
-                                <div class="puzzle-cell" 
-                                    [ngStyle]="getCellStyle(i, j)"
-                                    style="display: flex; align-items: center; justify-content: center; cursor: default;">
-                                    {{ val | number:'1.0-2' }}
-                                </div>
-                            }
-                                <div class="puzzle-cell" 
-                                    [ngStyle]="getCellStyle(i, currentMatrixADisplay[0].length)"
-                                    style="display: flex; align-items: center; justify-content: center; cursor: default;">
-                                    {{ currentMatrixBDisplay[i] | number:'1.0-2' }}
-                                </div>
-                        }
-                    </div>
-
-
-                    <div class="controls" style="flex-direction: row; margin-top: 20px;">
-                        <button (click)="prevStep()" [disabled]="currentStepIndex === 0" style="background: var(--tile-bg);">
-                            &lt; Prev
-                        </button>
-                        
-                        <button (click)="nextStep()" [disabled]="currentStepIndex === solutionData.steps.length - 1">
-                            Next &gt;
-                        </button>
-                    </div>
+            <div class="puzzle-grid" [style.grid-template-columns]="'repeat(' + (NumberEquations! + 1) + ', 1fr)'">
+                @for(row of currentMatrixADisplay; track row; let i = $index) {
+                @for(val of row; track val; let j = $index) {
+                <div class="puzzle-cell" [ngStyle]="getCellStyle(i, j)"
+                    style="display: flex; align-items: center; justify-content: center; cursor: default;">
+                    <span class="cell-value">{{ val }}</span>
+                </div>
                 }
-
-                @if(selectedMethod == "Gauss_Seidel" || selectedMethod == "JACOBI"){   
-                    
-                    @if(solutionData.equations && solutionData.equations.length > 0) {
-                        <div class="equations-container">
-                            <h3>Iteration Equations</h3>
-
-                            <div class="equations-list">
-                                @for (eq of solutionData.equations; track $index) {
-                                    <div class="equation-row" [innerHTML]="eq">
-                                    </div>
-                                }
-                            </div>
-                        </div>
-                    }
-                    <div class="Diagonal-container">
-                        <h3>Diagonally Dominant</h3>
-                        <div class="res">
-                        @if(solutionData.Diagonal){
-                            <span style="border-right: 4px solid var(--accent-color);">{{solutionData.Diagonal}}</span>
-
-                        } @else {
-                            <span style="border-right: 4px solid var(--error-color); color: #d85757">{{solutionData.Diagonal}}</span>
-
-                        }
-                        </div>
-                    </div>
-                    <div class="table-container">
-                        <table class="table">
-                            <thead>
-                            <tr>
-                                <th class="col">Iteration (k)</th>
-                                @for(iter of solutionData.steps;track iter.stepNumber){
-                                    <th>{{iter.stepNumber}}</th>
-                                }
-                            </tr>
-                            </thead>
-
-                            <tbody>
-                                @for (dummy of [].constructor(NumberEquations); track $index;let xIndex = $index){
-                                    <tr>
-                                        <th class="col">X<sub>{{xIndex+1}}</sub></th>
-                                        @for (iteration of solutionData.steps;track iteration.stepNumber ){
-                                            <td>
-                                                {{iteration.matrixB[xIndex] | number:'1.0-4'}}
-                                            </td>
-                                        }
-                                    </tr>
-                                }
-                            <th class="col">Relative Error</th>
-                                @for (iteration of solutionData.steps;track iteration.stepNumber){
-                                    <td>
-                                        {{iteration.Error | number:'1.0-4' }}
-                                    </td>
-                                }
-
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="puzzle-cell" [ngStyle]="getCellStyle(i, currentMatrixADisplay[0].length)"
+                    style="display: flex; align-items: center; justify-content: center; cursor: default;">
+                    <span class="cell-value">{{ currentMatrixBDisplay[i] }}</span>
+                </div>
                 }
-                
-                <button id="reset-button" (click)="backToResults()" style="margin-top: 20px; background: transparent; border: 1px solid var(--border-color);">
-                    Hide Steps
+            </div>
+
+
+            <div class="controls" style="flex-direction: row; margin-top: 20px;">
+                <button (click)="prevStep()" [disabled]="currentStepIndex === 0" style="background: var(--tile-bg);">
+                    &lt; Prev
+                </button>
+
+                <button (click)="nextStep()" [disabled]="currentStepIndex === solutionData.steps.length - 1">
+                    Next &gt;
                 </button>
             </div>
-        }
-    }
+            }
 
-</div>
-<div class="popup" [class.show]="show">
-    <div class="popup-menu">
-        <div class="popup-controlls">
-            <p>Presicion</p>
-            <input [defaultValue]="10" [(ngModel)]="precision">
+            @if(selectedMethod == "Gauss_Seidel" || selectedMethod == "JACOBI"){
+
+            @if(solutionData.equations && solutionData.equations.length > 0) {
+            <div class="equations-container">
+                <h3>Iteration Equations</h3>
+
+                <div class="equations-list">
+                    @for (eq of solutionData.equations; track $index) {
+                    <div class="equation-row" [innerHTML]="eq">
+                    </div>
+                    }
+                </div>
+            </div>
+            }
+            <div class="Diagonal-container">
+                <h3>Diagonally Dominant</h3>
+                <div class="res">
+                    @if(solutionData.Diagonal){
+                    <span style="border-right: 4px solid var(--accent-color);">{{solutionData.Diagonal}}</span>
+
+                    } @else {
+                    <span
+                        style="border-right: 4px solid var(--error-color); color: #d85757">{{solutionData.Diagonal}}</span>
+
+                    }
+                </div>
+            </div>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th class="col">Iteration (k)</th>
+                            @for(iter of solutionData.steps;track iter.stepNumber){
+                            <th>{{iter.stepNumber}}</th>
+                            }
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @for (dummy of [].constructor(NumberEquations); track $index;let xIndex = $index){
+                        <tr>
+                            <th class="col">X<sub>{{xIndex+1}}</sub></th>
+                            @for (iteration of solutionData.steps;track iteration.stepNumber ){
+                            <td>
+                                {{iteration.matrixB[xIndex] }}
+                            </td>
+                            }
+                        </tr>
+                        }
+                        <th class="col">Relative Error</th>
+                        @for (iteration of solutionData.steps;track iteration.stepNumber){
+                        <td>
+                            {{iteration.Error }}
+                        </td>
+                        }
+
+                    </tbody>
+                </table>
+            </div>
+            }
+
+            <button id="reset-button" (click)="backToResults()"
+                style="margin-top: 20px; background: transparent; border: 1px solid var(--border-color);">
+                Hide Steps
+            </button>
         </div>
-        @if (selectedMethod == 'JACOBI' || selectedMethod == 'Gauss_Seidel' ){
+        }
+        }
+
+    </div>
+    <div class="popup" [class.show]="show">
+        <div class="popup-menu">
+            <div class="popup-controlls">
+                <p>Presicion</p>
+                <input [defaultValue]="10" [(ngModel)]="precision">
+            </div>
+            @if (selectedMethod == 'JACOBI' || selectedMethod == 'Gauss_Seidel' ){
             <div class="popup-controlls">
                 <span>Tolerance</span>
-                <input  [defaultValue]="0.000001" [(ngModel)]="tolerance" >
+                <input [defaultValue]="0.000001" [(ngModel)]="tolerance">
             </div>
             <div class="popup-controlls">
                 <span>Iterations</span>
                 <input [(ngModel)]="maxIterations">
             </div>
-        <div class="initial-guess">
-            @for (item of [].constructor(NumberEquations) ; track $index){
+            <div class="initial-guess">
+                @for (item of [].constructor(NumberEquations) ; track $index){
                 <div class="popup-controlls">
-                <span>Initial Guess X{{$index+1}}</span>
+                    <span>Initial Guess X{{$index+1}}</span>
                     <input [(ngModel)]="initialGuess[$index]">
                 </div>
+                }
+            </div>
             }
-        </div>
-        }
-        @if (selectedMethod == 'Gauss_elimination') {
+            @if (selectedMethod == 'Gauss_elimination') {
             <div class="popup-controlls">
                 <span>Pivoting</span>
-            <input type="checkbox" [(ngModel)]="withpivoting">
+                <input type="checkbox" [(ngModel)]="withpivoting">
             </div>
             <div class="popup-controlls">
                 <span>Pivoting & scaling</span>
                 <input type="checkbox" [(ngModel)]="withscaling">
             </div>
-        }
-        <div class="continuebtn">
-        <button (click)="show=false">Continue</button>
+            }
+            <div class="continuebtn">
+                <button (click)="show=false">Continue</button>
+            </div>
         </div>
     </div>
-</div>
 </body>
 </html>

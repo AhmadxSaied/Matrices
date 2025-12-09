@@ -5,6 +5,7 @@ from decimal import Decimal
 import matplotlib.pyplot as plt
 import numpy as np
 import sympy as sp
+from sympy import sympify, Symbol, lambdify
 import pandas as pd
 @dataclass
 class Item(BaseModel):
@@ -134,3 +135,52 @@ def Bisection(Xl:float,Xu:float,Tolerance:float,maxIteration:int,Function:str):
         Fxrs.append(FXr)
     table = pd.DataFrame({"Xr":Xrs,"Xu":Xus,"Xl":Xls,"Error":Es,"Fxr":Fxrs})
     return table
+
+
+def str_to_func(exp):
+    x = Symbol('x')
+    sym_expr = sympify(exp)
+    return lambdify(x, sym_expr, 'math')  # or "numpy"
+
+# ! secant method
+# @para
+# p0 : 1st initial guess
+# p1 : 2nd initial guess
+# tol : tolerance
+# max : max number of itrations
+# exp : f(x) in str format
+# per : percision
+def secant_method(p0, p1,  exp, per, tol=0.00001, max_itr=50):
+    f = str_to_func(exp)
+    itration = 0
+    rel_error = 100
+    steps = []
+    while itration != max_itr and rel_error > tol:
+        new_p = p1 - (f(p1)*(p1-p0)/(f(p1)-f(p0)))
+        rel_error = abs((new_p - p1)/new_p) * 100
+        itration += 1
+        # print(f"itration {itration}\nnew_p {new_p}\nrel_error {rel_error}")
+        p0 = p1
+        p1 = new_p
+
+# ! fixed point itration method
+# @para
+# x : initial guess of fixed point
+# tol : tolerance
+# max : max number of itrations
+# exp : magic function g(x) in str format
+# per : percision
+def fixed_point_method(x,  exp, per, tol=0.00001, max_itr=50):
+    magic_function = str_to_func(exp)
+    itration = 0
+    rel_error = 100
+    steps = []
+    while itration != max_itr and rel_error > tol:
+        new_x = magic_function(x)
+        rel_error = abs((new_x - x)/new_x) * 100
+        itration += 1
+        print(f"itration {itration}\nnew_p {new_x}\nrel_error {rel_error}")
+        x = new_x
+    
+secant_method(1,2,"x**3 - x - 2",0)
+fixed_point_method(1, "cos(x)",0)

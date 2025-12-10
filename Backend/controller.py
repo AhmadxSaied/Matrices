@@ -3,13 +3,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import main
-
-origin = ["http//localhost:4200"]
+origin = ["http://localhost:4200"]
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origin = origin,
-    allow_method = ['*'],
+    allow_origins = origin,
+    allow_methods = ['*'],
     allow_headers = ['*']
 )
 
@@ -20,7 +19,7 @@ def Map_to_Function(request_data : main.Item):
         Response = main.Bisection(request_data,List_Steps)
         return Response
     if MethodId == "False_Regula":
-        Response = main.False_Regula(request_data,List_Steps)
+        Response = main.False_Position(request_data,List_Steps)
         return Response
     if MethodId == "Newton_Normal":
         Response = main.Newton_Normal(request_data,List_Steps)
@@ -29,9 +28,22 @@ def Map_to_Function(request_data : main.Item):
         Response = main.Newton_modified(request_data,List_Steps)
         return Response
     if MethodId == "Secant":
-        Response = main.Secant(request_data,List_Steps)
+        Response = main.secant_method(request_data,List_Steps)
         return Response
     if MethodId == "FixedPoint":
-        Response = main.FixedPoint(request_data,List_Steps)
+        Response = main.fixed_point_method(request_data,List_Steps)
         return Response
     return None
+@app.post("/phase2")
+async def Phase2(request_data : main.Item):
+    response = Map_to_Function(request_data)
+    if(response == None):
+        return "failed"
+    else:
+        return response
+
+#add later
+#@app.post("/map")
+#async def Map(request_data:main.Plotter):
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)

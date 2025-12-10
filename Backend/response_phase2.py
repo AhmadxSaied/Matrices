@@ -6,6 +6,7 @@ from typing_extensions import List
 class Steps: 
     stepNumber:int
     description:str
+    Error : Decimal
     X_U : Decimal | None = None
     X_L : Decimal | None = None
     X_r : Decimal | None = None
@@ -14,8 +15,7 @@ class Steps:
     F_Xu : Decimal | None  = None
     Xi_0 : Decimal | None = None
     Xi_1 : Decimal | None = None
-    Error : Decimal
-    
+
 
 @dataclass
 class Response:

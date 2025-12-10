@@ -1,0 +1,349 @@
+/* --- Container Layout --- */
+.solver-container {
+    background: var(--card-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    padding: 40px;
+    width: 90vw;
+    max-width: 1200px;
+    margin: 60px auto 40px auto; 
+    box-shadow: 0 10px 40px var(--shadow-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: all 0.3s ease;
+    
+}
+
+/* --- Input Area --- */
+#input-container {
+    text-align: center;
+    width: 100%;
+    max-width: 500px;
+}
+
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+    width: 100%;
+}
+
+select {
+    background: var(--tile-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 10px 20px;
+    border-radius: 10px;
+    outline: none;
+    cursor: pointer;
+    font-weight: 600;
+    min-width: 150px;
+}
+
+/* --- The Matrix Grid (THE FIX) --- */
+.puzzle-grid {
+    display: grid;
+    gap: 10px;
+    margin: 30px auto;
+    justify-content: center;
+    max-width: 100%;
+    padding: 10px;
+    overflow-x: scroll;
+}
+
+.puzzle-cell {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    width:100%; 
+    height:100%;
+    min-width:100%;
+    min-height:100%;
+    
+    background: var(--tile-empty-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    
+    color: var(--text-color);
+    font-size: 1.2rem;
+    font-weight: bold;
+    
+    transition: all 0.2s ease;
+}
+
+.puzzle-cell:focus-within {
+    border-color: var(--input-focus-border);
+    background: var(--tile-bg);
+    box-shadow: 0 0 0 3px rgba(0, 224, 255, 0.15);
+    transform: scale(1.05);
+}
+
+.puzzle-cell input {
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    background: transparent;
+    border: none;
+    font-size: inherit;
+    color: inherit;
+    outline: none;
+    padding: 0;
+    font-family: 'Courier New', monospace;
+}
+
+/* Validation Styles */
+.puzzle-cell.invalid { border-color: var(--error-color); color: var(--error-color); box-shadow: 0 0 10px rgba(239, 68, 68, 0.2); }
+.puzzle-cell.valid { border-color: var(--success-color); }
+
+/* --- Results & Steps --- */
+#display-container {
+    width: 100%;
+    margin-top: 30px;
+    animation: slideUp 0.5s ease-out;
+}
+
+.results-panel {
+    background: var(--tile-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 20px;
+    margin: 20px auto;
+    max-width: 600px;
+    text-align: center;
+}
+
+.step-description {
+    color: var(--text-color);
+    font-weight: 500;
+    margin-top: 10px;
+    font-size: 1.1rem;
+}
+
+/* --- Metrics & Vectors --- */
+.metrics-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin: 30px 0;
+    flex-wrap: wrap;
+}
+
+.metric-card {
+    background: var(--tile-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 15px 25px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 130px;
+}
+
+.metric-card .value {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin-top: 5px;
+    color: var(--primary-color);
+}
+
+.vector-display {
+    background: var(--tile-empty-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 25px;
+    margin-top: 20px;
+}
+
+.vector-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 15px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.vector-item {
+    background: var(--tile-bg);
+    padding: 10px 15px;
+    border-radius: 8px;
+    border-left: 3px solid var(--accent-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.var-name { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 5px; }
+.var-value { font-weight: bold; color: var(--text-color); }
+
+/* --- LU Decomposition --- */
+.lu-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+    background: var(--bg-color);
+    padding: 20px;
+    border-radius: 20px;
+    border: 1px dashed var(--border-color);
+}
+
+.lu-separator {
+    font-size: 2rem;
+    color: var(--text-muted);
+    font-weight: bold;
+}
+
+/* --- Tables (Iteration Methods) --- */
+.table-container {
+    overflow-x: auto;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    margin-top: 20px;
+    background: var(--card-bg);
+}
+
+table { width: 100%; border-collapse: collapse; }
+
+th, td {
+    padding: 12px 15px;
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+}
+
+th {
+    background: var(--tile-bg);
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+td { color: var(--text-color); }
+tr:last-child td { border-bottom: none; }
+
+/* --- Animations --- */
+.animate-up { animation: slideUp 0.5s ease-out; }
+@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+/* --- Popups --- */
+.popup {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    visibility: hidden; opacity: 0;
+    transition: 0.3s;
+}
+
+.popup.show { visibility: visible; opacity: 1; }
+
+.popup-menu {
+    background: var(--card-bg);
+    padding: 30px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    width: 90%;
+    max-width: 450px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+
+.popup-controlls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.popup-controlls input {
+    background: var(--tile-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+    padding: 5px 10px;
+    border-radius: 8px;
+    width: 100px;
+    text-align: center;
+}
+.equations-container {
+    margin-top: 20px;
+    background: inherit;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+.equations-list{
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+}
+.equations-container h3 {
+    margin-top: 0;
+    color: #F9F9F9;
+    font-size: 1.1rem;
+    border-bottom: 2px solid var(--accent-color);
+    display: inline-block;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.equation-row {
+    font-family: 'Times New Roman', serif;
+    font-size: 1.3rem; 
+    margin-bottom: 12px;
+    padding: 10px;
+    background-color: inherit;
+    border-radius: 6px;
+    border-left: 4px solid var(--accent-color);
+}
+
+
+
+.continuebtn {
+    display: flex;
+    width: 100%;
+    margin: auto 10px 20px 0;
+    justify-content: center;
+}
+.initial-guess{
+    width: 100%;
+    padding-bottom: 20px;
+}
+.Diagonal-container{
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    align-items: center;
+    width:50%;
+    margin-bottom: 20px;
+
+}
+.Diagonal-container span {
+    font-family: 'Times New Roman', serif;
+    font-size: 2rem;
+    padding: 10px;
+    background-color: inherit;
+    border-radius: 6px;
+}
+.res{
+    display: flex;
+    margin-left: auto;
+}
+
+.cell-value {
+    min-width: 100%;
+    text-align: center;
+    white-space: nowrap;
+    padding: 0 5px;
+    margin: 0;
+}

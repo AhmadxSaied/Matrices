@@ -42,8 +42,9 @@ async def Phase2(request_data : main.Item):
     else:
         return response
 
-#add later
-#@app.post("/map")
-#async def Map(request_data:main.Plotter):
+
+@app.post("/map")
+async def Map(request_data:main.Plotter):
+    return main.plotter_Function(request_data)
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

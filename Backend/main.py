@@ -1,3 +1,5 @@
+import base64
+import io
 import time
 
 from pydantic import BaseModel
@@ -40,10 +42,12 @@ def plotter_Function(plotter:Plotter):
     assert plotter.NumberOfPoints > 0
     
     Symp_Function = sp.sympify(plotter.Function)
-    print((list(Symp_Function.free_symbols)))
+
+
     Symbols = list(Symp_Function.free_symbols)
-    
-    print(Symp_Function)
+    if not Symbols:
+        return "error"
+
     MathExpression = sp.lambdify(Symbols,Symp_Function)
     
     LineSpace = np.linspace(True_Lower,True_Upper,plotter.NumberOfPoints)
@@ -57,7 +61,14 @@ def plotter_Function(plotter:Plotter):
     ax.axhline(y=0,color="black",linestyle="solid")
     ax.axvline(x=0,color="black",linestyle="solid")
     ax.grid(True)
-    return Fig,ax
+
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png',bbox_inches='tight')
+    plt.close()
+    buf.seek(0)
+    image_base64 = base64.b64encode(buf.read()).decode("utf-8")
+    data_url = f"data:image/png;base64,{image_base64}"
+    return data_url
 
 """
     FalsePosition method

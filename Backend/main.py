@@ -106,7 +106,7 @@ def False_Position(item:Item,all_steps:List['Steps']):
         res_message = "SUCCESS"
         why = ""
     end_time = time.perf_counter()
-    return Response(res_message,Xrs[-1],round(end_time - start_time,6),iterations,all_steps,why)
+    return Response(res_message,Xrs[-1],round(end_time - start_time,6),iterations,all_steps,why,FinalError=Error)
 
 """
     Bisection
@@ -132,6 +132,7 @@ def Bisection(item:Item,all_steps:List['Steps']):
     Xls=[]
     Es = []
     Fxrs =[]
+    Xr_Loop=0
     while((np.abs(Error)>=item.Tolerance) and (iterations)<=item.maxIteration):
         iterations = iterations+1
         FXl = MathExpression(Xl_Loop)
@@ -144,8 +145,8 @@ def Bisection(item:Item,all_steps:List['Steps']):
         elif(Decision > 0):
             Xl_Loop = Xr_Loop
         else:
-            end_time = time.perf_counter()
-            return Response("SUCCESS",Xr_Old,round(end_time - start_time,6),iterations,all_steps,"")
+            Error =0
+            break
 
         Error = (Xr_Loop -Xr_Old)/(Xr_Loop)
         Xr_Old = Xr_Loop
@@ -161,7 +162,7 @@ def Bisection(item:Item,all_steps:List['Steps']):
         res_message = "SUCCESS"
         why = ""
     end_time = time.perf_counter()
-    return Response(res_message,Xr_Old,round(end_time - start_time,6),iterations,all_steps,why)
+    return Response(res_message,Xr_Loop,round(end_time - start_time,6),iterations,all_steps,why,FinalError=Error)
 
 
 def str_to_func(exp):
@@ -201,7 +202,7 @@ def secant_method(item:Item,all_steps:List['Steps']):
         res_message = "SUCCESS"
         why = ""
     end_time = time.perf_counter()
-    return Response(res_message,p1,round(end_time-start_time,6),itration,all_steps,why)
+    return Response(res_message,p1,round(end_time-start_time,6),itration,all_steps,why,FinalError=rel_error)
 
 
 
@@ -236,5 +237,5 @@ def fixed_point_method(item:Item,all_steps:List['Steps']):
         res_message = "SUCCESS"
         why = ""
     end_time = time.perf_counter()
-    return Response(res_message,x,round(end_time-start_time,6),itration,all_steps,why)
+    return Response(res_message,x,round(end_time-start_time,6),itration,all_steps,why,FinalError=rel_error)
 

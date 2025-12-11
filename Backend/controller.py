@@ -18,7 +18,7 @@ def Map_to_Function(request_data : main.Item):
     if MethodId == "Bisection":
         Response = main.Bisection(request_data,List_Steps)
         return Response
-    if MethodId == "False_Regula":
+    if MethodId == "False_Position":
         Response = main.False_Position(request_data,List_Steps)
         return Response
     if MethodId == "Newton_Normal":
@@ -34,7 +34,7 @@ def Map_to_Function(request_data : main.Item):
         Response = main.fixed_point_method(request_data,List_Steps)
         return Response
     return None
-@app.post("/phase2")
+@app.post("/solve_root")
 async def Phase2(request_data : main.Item):
     response = Map_to_Function(request_data)
     if(response == None):

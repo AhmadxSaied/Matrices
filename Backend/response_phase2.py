@@ -25,6 +25,7 @@ class Response:
     TotalIterations : int
     steps : List[Steps]
     errorMessage:str
+    FinalError:Decimal
 
 def addsteps(
     all_steps:List['Steps'],

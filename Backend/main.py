@@ -5,7 +5,7 @@ import time
 from pydantic import BaseModel
 from typing_extensions import List
 from dataclasses import dataclass
-from decimal import Decimal
+from decimal import Decimal, getcontext
 import matplotlib.pyplot as plt
 import numpy as np
 import sympy as sp
@@ -78,6 +78,7 @@ def plotter_Function(plotter:Plotter):
 
 def False_Position(item:Item,all_steps:List['Steps']):
     start_time = time.perf_counter()
+    getcontext().prec = item.precision if item.precision is not None else 10
     Sp_Function = sp.sympify(item.Function)
     Symbols = list(Sp_Function.free_symbols)
     MathExpression = sp.lambdify(Symbols,Sp_Function)
@@ -128,6 +129,7 @@ def False_Position(item:Item,all_steps:List['Steps']):
 import pandas as pd
 import numpy as np
 def Bisection(item:Item,all_steps:List['Steps']):
+    getcontext().prec = item.precision if item.precision is not None else 10
     start_time = time.perf_counter()
     Sp_Function = sp.sympify(item.Function)
     Symbols = list(Sp_Function.free_symbols)
@@ -190,6 +192,7 @@ def str_to_func(exp):
 # exp : f(x) in str format
 # per : percision
 def secant_method(item:Item,all_steps:List['Steps']):
+    getcontext().prec = item.precision if item.precision is not None else 10
     start_time = time.perf_counter()
     f = str_to_func(item.Function)
     itration = 0
@@ -227,6 +230,7 @@ def secant_method(item:Item,all_steps:List['Steps']):
 # exp : magic function g(x) in str format
 # per : percision
 def fixed_point_method(item:Item,all_steps:List['Steps']):
+    getcontext().prec = item.precision if item.precision is not None else 10
     start_time = time.perf_counter()
     magic_function = str_to_func(item.Function)
     itration = 0

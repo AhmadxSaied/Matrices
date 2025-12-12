@@ -12,6 +12,7 @@ import sympy as sp
 from sympy import sympify, Symbol, lambdify
 import pandas as pd
 from response_phase2 import Response,Steps,addsteps
+from autograd import grad
 @dataclass
 class Item(BaseModel):
     Function : str
@@ -254,3 +255,67 @@ def fixed_point_method(item:Item,all_steps:List['Steps']):
     end_time = time.perf_counter()
     return Response(res_message,x,round(end_time-start_time,6),itration,all_steps,why,FinalError=rel_error)
 
+def Newton_Normal(item: Item,all_steps:List['Steps']):
+    getcontext().prec = item.percision if item.percision is not None else 10
+    start_time = time.perf_counter()
+    initial_guess = Decimal(item.Xo_Initial) + 0
+    maxIterations = item.maxIteration
+    x = [initial_guess]
+    oldX = initial_guess
+    f = str_to_func(item.Function)
+    f_p = grad(f)
+    
+    def app(x):
+        return x -f(x) / Decimal(f_p(float(x))) 
+    iterations = 1;
+    
+    for i in range(maxIterations):
+        if(f_p(float(oldX)) == 0):
+            return Response(status="Failed", errorMessage="The value of the f`(x) at xo initial = zero try another initial guess")
+        newX = app(oldX)
+        x.append(newX)
+        ea = abs(((newX - oldX)/newX) * 100);
+        addsteps(all_steps=all_steps,description=f"{i+1}. current approximation = {newX}" , X_r=newX, F_Xr=f(newX), Error=ea, )
+        if(ea < item.Tolerance):
+            print(f"epsilon reached in {iterations} iterations")
+            end_time = time.perf_counter()
+            return Response(status="success", result=newX, executionTime=round(end_time - start_time, 6), TotalIterations=iterations, steps=all_steps, FinalError=ea, errorMessage=None )
+        oldX = newX
+        iterations +=1
+    end_time = time.perf_counter()
+    print("max iterations reached")
+    return Response(status="failed", result=newX, executionTime=round(end_time - start_time, 6), TotalIterations=iterations, steps=all_steps, FinalError=ea, errorMessage="Max iteration reached" ) 
+
+def Newton_modified(item: Item,all_steps: List['Steps']):
+    getcontext().prec = item.percision if item.percision is not None else 10
+    start_time = time.perf_counter()
+    initial_guess = Decimal(item.Xo_Initial) + 0
+    x = [initial_guess]
+    oldX = initial_guess
+    f = str_to_func(item.Function)
+    f_p = grad(f)
+    f_pp = grad(f_p)
+    def app(x):
+        f_x = Decimal(f(float(x)))
+        fp_x = Decimal(f_p(float(x)))
+        fpp_x = Decimal(f_pp(float(x)))
+        return Decimal(x - (f_x * fp_x)/ (fp_x**2 - f_x * fpp_x))
+    iterations = 1;
+    
+    for i in range(item.maxIteration):
+        if(f_p(float(oldX)) == 0):
+            return Response(status="Failed", errorMessage="The value of the f`(x) at xo initial = zero, try another initial guess")
+        newX = app(oldX)
+        newX = app(oldX);
+        x.append(newX);
+        ea = abs(((newX - oldX)/newX) * 100);
+        addsteps(all_steps=all_steps,description=f"{i+1}. current approximation = {newX}" , X_r=newX, F_Xr=f(newX), Error=ea, )
+        if(ea < item.Tolerance):
+            print(f"epsilon reached in {iterations} iterations")
+            end_time = time.perf_counter()
+            return Response(status="success", result=newX, executionTime=round(end_time - start_time, 6), TotalIterations=iterations, steps=all_steps, FinalError=ea, errorMessage=None )
+        oldX = newX
+        iterations +=1
+    print("max iterations reached")
+    end_time = time.perf_counter()
+    return Response(status="failed", result=newX, executionTime=round(end_time - start_time, 6), TotalIterations=iterations, steps=all_steps, FinalError=ea, errorMessage="Max iteration reached" )

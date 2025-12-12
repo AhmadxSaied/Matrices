@@ -1,9 +1,11 @@
+import base64
+import io
 import time
 
 from pydantic import BaseModel
 from typing_extensions import List
 from dataclasses import dataclass
-from decimal import Decimal
+from decimal import Decimal, getcontext
 import matplotlib.pyplot as plt
 import numpy as np
 import sympy as sp
@@ -40,10 +42,12 @@ def plotter_Function(plotter:Plotter):
     assert plotter.NumberOfPoints > 0
     
     Symp_Function = sp.sympify(plotter.Function)
-    print((list(Symp_Function.free_symbols)))
+
+
     Symbols = list(Symp_Function.free_symbols)
-    
-    print(Symp_Function)
+    if not Symbols:
+        return "error"
+
     MathExpression = sp.lambdify(Symbols,Symp_Function)
     
     LineSpace = np.linspace(True_Lower,True_Upper,plotter.NumberOfPoints)
@@ -57,7 +61,14 @@ def plotter_Function(plotter:Plotter):
     ax.axhline(y=0,color="black",linestyle="solid")
     ax.axvline(x=0,color="black",linestyle="solid")
     ax.grid(True)
-    return Fig,ax
+
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png',bbox_inches='tight')
+    plt.close()
+    buf.seek(0)
+    image_base64 = base64.b64encode(buf.read()).decode("utf-8")
+    data_url = f"data:image/png;base64,{image_base64}"
+    return data_url
 
 """
     FalsePosition method
@@ -67,6 +78,7 @@ def plotter_Function(plotter:Plotter):
 
 def False_Position(item:Item,all_steps:List['Steps']):
     start_time = time.perf_counter()
+    getcontext().prec = item.precision if item.precision is not None else 10
     Sp_Function = sp.sympify(item.Function)
     Symbols = list(Sp_Function.free_symbols)
     MathExpression = sp.lambdify(Symbols,Sp_Function)
@@ -106,7 +118,7 @@ def False_Position(item:Item,all_steps:List['Steps']):
         res_message = "SUCCESS"
         why = ""
     end_time = time.perf_counter()
-    return Response(res_message,Xrs[-1],round(end_time - start_time,6),iterations,all_steps,why)
+    return Response(res_message,Xrs[-1],round(end_time - start_time,6),iterations,all_steps,why,FinalError=Error)
 
 """
     Bisection
@@ -117,6 +129,7 @@ def False_Position(item:Item,all_steps:List['Steps']):
 import pandas as pd
 import numpy as np
 def Bisection(item:Item,all_steps:List['Steps']):
+    getcontext().prec = item.precision if item.precision is not None else 10
     start_time = time.perf_counter()
     Sp_Function = sp.sympify(item.Function)
     Symbols = list(Sp_Function.free_symbols)
@@ -132,6 +145,7 @@ def Bisection(item:Item,all_steps:List['Steps']):
     Xls=[]
     Es = []
     Fxrs =[]
+    Xr_Loop=0
     while((np.abs(Error)>=item.Tolerance) and (iterations)<=item.maxIteration):
         iterations = iterations+1
         FXl = MathExpression(Xl_Loop)
@@ -144,8 +158,8 @@ def Bisection(item:Item,all_steps:List['Steps']):
         elif(Decision > 0):
             Xl_Loop = Xr_Loop
         else:
-            end_time = time.perf_counter()
-            return Response("SUCCESS",Xr_Old,round(end_time - start_time,6),iterations,all_steps,"")
+            Error =0
+            break
 
         Error = (Xr_Loop -Xr_Old)/(Xr_Loop)
         Xr_Old = Xr_Loop
@@ -161,7 +175,7 @@ def Bisection(item:Item,all_steps:List['Steps']):
         res_message = "SUCCESS"
         why = ""
     end_time = time.perf_counter()
-    return Response(res_message,Xr_Old,round(end_time - start_time,6),iterations,all_steps,why)
+    return Response(res_message,Xr_Loop,round(end_time - start_time,6),iterations,all_steps,why,FinalError=Error)
 
 
 def str_to_func(exp):
@@ -178,6 +192,7 @@ def str_to_func(exp):
 # exp : f(x) in str format
 # per : percision
 def secant_method(item:Item,all_steps:List['Steps']):
+    getcontext().prec = item.precision if item.precision is not None else 10
     start_time = time.perf_counter()
     f = str_to_func(item.Function)
     itration = 0
@@ -201,7 +216,7 @@ def secant_method(item:Item,all_steps:List['Steps']):
         res_message = "SUCCESS"
         why = ""
     end_time = time.perf_counter()
-    return Response(res_message,p1,round(end_time-start_time,6),itration,all_steps,why)
+    return Response(res_message,p1,round(end_time-start_time,6),itration,all_steps,why,FinalError=rel_error)
 
 
 
@@ -215,6 +230,7 @@ def secant_method(item:Item,all_steps:List['Steps']):
 # exp : magic function g(x) in str format
 # per : percision
 def fixed_point_method(item:Item,all_steps:List['Steps']):
+    getcontext().prec = item.precision if item.precision is not None else 10
     start_time = time.perf_counter()
     magic_function = str_to_func(item.Function)
     itration = 0
@@ -236,5 +252,5 @@ def fixed_point_method(item:Item,all_steps:List['Steps']):
         res_message = "SUCCESS"
         why = ""
     end_time = time.perf_counter()
-    return Response(res_message,x,round(end_time-start_time,6),itration,all_steps,why)
+    return Response(res_message,x,round(end_time-start_time,6),itration,all_steps,why,FinalError=rel_error)
 

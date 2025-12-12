@@ -25,6 +25,7 @@ interface RootResponse {
   TotalIterations: number;
   steps: Step[];
   errorMessage: string | null;
+  FinalError:number;
 }
 
 @Component({
@@ -86,10 +87,11 @@ export class Phase2 {
       max_itr: this.maxIterations,
       percision: this.precision
     };
-
+    console.log(payload)
     this.http.post<RootResponse>('http://127.0.0.1:8000/solve_root', payload)
       .subscribe({
         next: (res) => {
+          console.log(res);
           this.solutionData = res;
           this.isSolving = false;
           setTimeout(() => {

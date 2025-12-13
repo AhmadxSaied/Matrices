@@ -43,7 +43,7 @@ async def Phase2(request_data : main.Item):
         return response
 
 
-@app.post("/map")
+@app.post("/plot")
 async def Map(request_data:main.Plotter):
     return main.plotter_Function(request_data)
 if __name__ == "__main__":

@@ -3,6 +3,9 @@ import io
 import time
 
 from pydantic import BaseModel
+from sympy.parsing.mathematica import *
+from sympy.parsing.mathematica import parse_mathematica
+from sympy.parsing.sympy_parser import transformations, implicit_multiplication_application
 from typing_extensions import List
 from dataclasses import dataclass
 from decimal import Decimal, getcontext
@@ -19,7 +22,7 @@ class Item(BaseModel):
     MethodId:str
     X_Lower : Decimal | None = None
     X_Upper : Decimal | None = None
-    percision : int | None = 10
+    precision : int | None = 10
     Tolerance : Decimal | None = Decimal("1e-6")
     Xo_Initial : Decimal | None = None
     X1_Initial : Decimal | None = None
@@ -135,12 +138,12 @@ def Bisection(item:Item,all_steps:List['Steps']):
     Sp_Function = sp.sympify(item.Function)
     Symbols = list(Sp_Function.free_symbols)
     MathExpression = sp.lambdify(Symbols,Sp_Function)
-    assert MathExpression(item.X_Lower) * MathExpression(item.X_Upper) <0
-    Error = 1.0
-    Xu_Loop = item.X_Lower
-    Xl_Loop = item.X_Upper
+    assert MathExpression(Decimal(str(item.X_Lower))) * MathExpression(Decimal(str(item.X_Upper))) <0
+    Error = Decimal("1.0")
+    Xu_Loop = Decimal(str(item.X_Lower))
+    Xl_Loop = Decimal(str(item.X_Upper))
     iterations= 0
-    Xr_Old = 0
+    Xr_Old = Decimal('0')
     Xrs = []
     Xus=[]
     Xls=[]

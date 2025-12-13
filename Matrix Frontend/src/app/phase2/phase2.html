@@ -1,10 +1,10 @@
 <div class="phase2-container" style="margin: 60px auto 40px auto;
 ">
-    
+
     <div class="nav-header">
-        <button class="icon-btn back-btn" (click)="goHome()" >
+        <button class="icon-btn back-btn" (click)="goHome()">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M19 12H5M12 19l-7-7 7-7"/>
+                <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
         </button>
         <div class="header-title">
@@ -16,12 +16,13 @@
     <div class="main-grid">
         <div class="input-card glow-border">
             <h2>Configuration</h2>
-            
+
             <div class="form-group equation-group">
                 <label>Function f(x)</label>
                 <div class="input-wrapper">
                     <span class="prefix">f(x) =</span>
-                    <input type="text" [(ngModel)]="functionStr" placeholder="e.g. x^3 - 2*x - 5" class="equation-input">
+                    <input type="text" [(ngModel)]="functionStr" placeholder="e.g. x^3 - 2*x - 5"
+                        class="equation-input">
                 </div>
             </div>
 
@@ -30,7 +31,7 @@
                     <label>Method</label>
                     <select [(ngModel)]="selectedMethod">
                         @for(m of methods; track m.id) {
-                            <option [value]="m.id">{{ m.name }}</option>
+                        <option [value]="m.id">{{ m.name }}</option>
                         }
                     </select>
                 </div>
@@ -52,37 +53,53 @@
             </div>
 
             <div class="dynamic-inputs animate-fade">
-                @if(isBracketMethod) {
+                @if (!isBracketMethod) {
+                <div class="dynamic-inputs animate-fade">
+                    <p style="font-size: 1.5rem; margin-top: 0px;">Plotter Points</p>
                     <div class="bracket-group">
                         <div class="form-group">
-                            <label class="text-accent">Lower Bound (Xl)</label>
+                            <label class="text-accent">Lower Plot Bound </label>
                             <input type="number" [(ngModel)]="xl" class="highlight-input">
                         </div>
                         <div class="form-group">
-                            <label class="text-primary">Upper Bound (Xu)</label>
+                            <label class="text-primary">Upper Plot Bound </label>
                             <input type="number" [(ngModel)]="xu" class="highlight-input">
                         </div>
                     </div>
+                </div>
+                }
+                @if(isBracketMethod) {
+                <p style="font-size: 1.5rem; margin-top: 0px;">Plotter Points</p>
+                <div class="bracket-group">
+                    <div class="form-group">
+                        <label class="text-accent">Lower Bound (Xl)</label>
+                        <input type="number" [(ngModel)]="xl" class="highlight-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="text-primary">Upper Bound (Xu)</label>
+                        <input type="number" [(ngModel)]="xu" class="highlight-input">
+                    </div>
+                </div>
                 }
 
                 @if(isOpenMethod) {
-                    <div class="form-group">
-                        <label class="text-success">Initial Guess (X0)</label>
-                        <input type="number" [(ngModel)]="x0" class="highlight-input">
-                    </div>
+                <div class="form-group">
+                    <label class="text-success">Initial Guess (X0)</label>
+                    <input type="number" [(ngModel)]="x0" class="highlight-input">
+                </div>
                 }
 
                 @if(isSecant) {
-                    <div class="bracket-group">
-                        <div class="form-group">
-                            <label class="text-accent">First Guess (X0)</label>
-                            <input type="number" [(ngModel)]="x0" class="highlight-input">
-                        </div>
-                        <div class="form-group">
-                            <label class="text-primary">Second Guess (X1)</label>
-                            <input type="number" [(ngModel)]="x1" class="highlight-input">
-                        </div>
+                <div class="bracket-group">
+                    <div class="form-group">
+                        <label class="text-accent">First Guess (X0)</label>
+                        <input type="number" [(ngModel)]="x0" class="highlight-input">
                     </div>
+                    <div class="form-group">
+                        <label class="text-primary">Second Guess (X1)</label>
+                        <input type="number" [(ngModel)]="x1" class="highlight-input">
+                    </div>
+                </div>
                 }
             </div>
 
@@ -99,76 +116,76 @@
         </div>
 
         @if(plotImage) {
-            <div class="graph-card animate-slide-up">
-                <img [src]="plotImage" alt="Function Plot">
-            </div>
+        <div class="graph-card animate-slide-up">
+            <img [src]="plotImage" alt="Function Plot">
+        </div>
         }
     </div>
 
     @if(solutionData) {
-        <div id="results-section" class="results-container animate-slide-up">
-            
-            @if(solutionData.errorMessage) {
-                <div class="error-banner">
-                    <span class="icon">⚠</span>
-                    <span>{{ solutionData.errorMessage }}</span>
-                </div>
-            } @else {
-                <div class="success-banner">
-                    <div class="root-display">
-                        <span class="label">APPROXIMATE ROOT = </span>
-                        <span class="value">{{ solutionData.result }}</span>
-                    </div>
-                </div>
+    <div id="results-section" class="results-container animate-slide-up">
 
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <span class="stat-label">Time</span>
-                        <span class="stat-value">{{ solutionData.executionTime }}s</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-label">Iterations</span>
-                        <span class="stat-value">{{ solutionData.TotalIterations }}</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-label">Final Error</span>
-                        <span class="stat-value">{{ solutionData.FinalError | number:'1.1-6' }}</span>
-                    </div>
-                </div>
-
-                <button class="btn btn-outline full-width" (click)="toggleTable()">
-                    {{ showTable ? 'Hide Iterations' : 'View Step-by-Step Table' }}
-                </button>
-
-                @if(showTable && solutionData.steps.length > 0) {
-                    <div id="steps-table" class="table-wrapper animate-fade">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>X_Lower</th>
-                                    <th>X_Upper</th>
-                                    <th>X_Root</th>
-                                    <th>f(Xr)</th>
-                                    <th>Error</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @for(step of solutionData.steps; track step.stepNumber) {
-                                    <tr>
-                                        <td>{{ step.stepNumber }}</td>
-                                        <td>{{ step.X_L ?? '-' }}</td>
-                                        <td>{{ step.X_U ?? '-' }}</td>
-                                        <td class="text-highlight">{{ step.X_r }}</td>
-                                        <td>{{ step.F_Xr }}</td>
-                                        <td>{{ step.Error }}</td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    </div>
-                }
-            }
+        @if(solutionData.errorMessage) {
+        <div class="error-banner">
+            <span class="icon">⚠</span>
+            <span>{{ solutionData.errorMessage }}</span>
         </div>
+        } @else {
+        <div class="success-banner">
+            <div class="root-display">
+                <span class="label">APPROXIMATE ROOT = </span>
+                <span class="value">{{ solutionData.result }}</span>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <span class="stat-label">Time</span>
+                <span class="stat-value">{{ solutionData.executionTime }}s</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Iterations</span>
+                <span class="stat-value">{{ solutionData.TotalIterations }}</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-label">Final Error</span>
+                <span class="stat-value">{{ solutionData.FinalError | number:'1.1-6' }}</span>
+            </div>
+        </div>
+
+        <button class="btn btn-outline full-width" (click)="toggleTable()">
+            {{ showTable ? 'Hide Iterations' : 'View Step-by-Step Table' }}
+        </button>
+
+        @if(showTable && solutionData.steps.length > 0) {
+        <div id="steps-table" class="table-wrapper animate-fade">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>X_Lower</th>
+                        <th>X_Upper</th>
+                        <th>X_Root</th>
+                        <th>f(Xr)</th>
+                        <th>Error</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for(step of solutionData.steps; track step.stepNumber) {
+                    <tr>
+                        <td>{{ step.stepNumber }}</td>
+                        <td>{{ step.X_L ?? '-' }}</td>
+                        <td>{{ step.X_U ?? '-' }}</td>
+                        <td class="text-highlight">{{ step.X_r }}</td>
+                        <td>{{ step.F_Xr }}</td>
+                        <td>{{ step.Error }}</td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        }
+        }
+    </div>
     }
 </div>

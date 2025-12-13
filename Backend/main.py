@@ -97,25 +97,25 @@ def False_Position(item:Item,all_steps:List['Steps']):
     Xls=[]
     Es = []
     Fxrs =[]
-    while(np.abs(Error)>=item.Tolerance and iterations<=item.maxIteration):
+    while(Error>=item.Tolerance and iterations<=item.maxIteration):
         iterations=iterations+1
         FXl = MathExpression(Xl_Loop)
         FXu =MathExpression(Xu_Loop)
         Xr_Loop = ((Xl_Loop * FXu)-(Xu_Loop * FXl))/(FXu - FXl)
-        FXr = MathExpression(Xr_Loop)
+        FXr = Decimal(MathExpression(float(Xr_Loop)))
         addsteps(all_steps,f"Xr = (({Xl_Loop} * {FXu})-({Xu_Loop} * {FXl}))/({FXu} - {FXl})",X_U=Xu_Loop,X_L=Xl_Loop,X_r=Xr_Loop,F_Xr=FXr,F_Xl=FXl,F_Xu=FXu,Error=Error)
         if(np.sign(FXu)==np.sign(FXr)):
             Xu_Loop = Xr_Loop
         elif(np.sign(FXl)==np.sign(FXr)):
             Xl_Loop = Xr_Loop
-        Error = (Xr_Loop - Xr_Old)/(Xr_Loop)
+        Error = abs((Xr_Loop - Xr_Old)/(Xr_Loop))
         Xr_Old = Xr_Loop
         Xrs.append(Xr_Loop)
         Xus.append(Xu_Loop)
         Xls.append(Xl_Loop)
         Es.append(Error)
         Fxrs.append(FXr)
-    if (np.abs(Error) > item.Tolerance):
+    if (Error > item.Tolerance):
         res_message = "Error"
         why = "failed to converge with max iteration"
     else:
@@ -138,10 +138,10 @@ def Bisection(item:Item,all_steps:List['Steps']):
     Sp_Function = sp.sympify(item.Function)
     Symbols = list(Sp_Function.free_symbols)
     MathExpression = sp.lambdify(Symbols,Sp_Function)
-    assert MathExpression(Decimal(str(item.X_Lower))) * MathExpression(Decimal(str(item.X_Upper))) <0
     Error = Decimal("1.0")
-    Xu_Loop = Decimal(str(item.X_Lower))
-    Xl_Loop = Decimal(str(item.X_Upper))
+    print(item.X_Lower)
+    Xu_Loop = Decimal(str(item.X_Upper))
+    Xl_Loop = Decimal(str(item.X_Lower))
     iterations= 0
     Xr_Old = Decimal('0')
     Xrs = []
@@ -149,12 +149,12 @@ def Bisection(item:Item,all_steps:List['Steps']):
     Xls=[]
     Es = []
     Fxrs =[]
-    Xr_Loop=0
-    while((np.abs(Error)>=item.Tolerance) and (iterations)<=item.maxIteration):
+    Xr_Loop=Decimal('0')
+    while(Error>=item.Tolerance and (iterations)<=item.maxIteration):
         iterations = iterations+1
-        FXl = MathExpression(Xl_Loop)
-        Xr_Loop = Xu_Loop - (Xu_Loop-Xl_Loop)/2
-        FXr = MathExpression(Xr_Loop)
+        FXl = Decimal(MathExpression(float(Xl_Loop)))
+        Xr_Loop = Xu_Loop - (Xu_Loop-Xl_Loop)/ Decimal("2")
+        FXr = Decimal(MathExpression(float(Xr_Loop)))
         Decision = (FXl * FXr)
         addsteps(all_steps,f"Xr = ({Xu_Loop+Xl_Loop})/2",Xu_Loop,Xl_Loop,X_r=Xr_Loop,F_Xr=FXr,F_Xl=FXl,Error=Error)
         if(Decision < 0):
@@ -165,14 +165,15 @@ def Bisection(item:Item,all_steps:List['Steps']):
             Error =0
             break
 
-        Error = (Xr_Loop -Xr_Old)/(Xr_Loop)
+        if(iterations!=1):
+            Error = abs((Xr_Loop - Xr_Old) / Xr_Loop)
         Xr_Old = Xr_Loop
         Xrs.append(Xr_Loop)
         Xus.append(Xu_Loop)
         Xls.append(Xl_Loop)
         Es.append(Error)
         Fxrs.append(FXr)
-    if(np.abs(Error) > item.Tolerance):
+    if(Error > item.Tolerance):
         res_message = "Error"
         why = "failed to converge with max iteration"
     else:
@@ -270,7 +271,7 @@ def Newton_Normal(item: Item,all_steps:List['Steps']):
     
     def app(x):
         return x -f(x) / Decimal(f_p(float(x))) 
-    iterations = 1;
+    iterations = 1
     
     for i in range(maxIterations):
         if(f_p(float(oldX)) == 0):

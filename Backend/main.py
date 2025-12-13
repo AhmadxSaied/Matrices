@@ -130,8 +130,7 @@ def False_Position(item:Item,all_steps:List['Steps']):
     Panda will be Substituted by responsse Class
 """
 
-import pandas as pd
-import numpy as np
+
 def Bisection(item:Item,all_steps:List['Steps']):
     getcontext().prec = item.precision if item.precision is not None else 10
     start_time = time.perf_counter()
@@ -204,8 +203,8 @@ def secant_method(item:Item,all_steps:List['Steps']):
     p0 = item.Xo_Initial
     p1 = item.X1_Initial
     while itration != item.maxIteration and rel_error > item.Tolerance:
-        fp0 = f(p0)
-        fp1 = f(p1)
+        fp0 = Decimal(f(float(p0)))
+        fp1 = Decimal(f(float(p1)))
         new_p = p1 - (fp1*(p1-p0)/(fp1-fp0))
         rel_error = abs((new_p - p1)/new_p) * 100
         addsteps(all_steps,f"X{itration+2} = {p1} - (({fp1}*({p1}-{p0})/({fp1}-{fp0}))) ",Error=rel_error,X_r=new_p,X_U=p1,X_L=p0)
@@ -243,7 +242,7 @@ def fixed_point_method(item:Item,all_steps:List['Steps']):
     tol = item.Tolerance
     max_itr=item.maxIteration
     while itration != max_itr and rel_error > tol:
-        new_x = magic_function(x)
+        new_x = Decimal(magic_function(float(x)))
         rel_error = abs((new_x - x)/new_x) * 100
         itration += 1
         addsteps(all_steps,f"X{itration} = {new_x}",Error=rel_error,Xi_0=x,X_r=new_x)

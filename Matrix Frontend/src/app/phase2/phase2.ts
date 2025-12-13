@@ -44,6 +44,7 @@ export class Phase2 {
   precision: number = 10;
   tolerance: number = 0.00001;
   maxIterations: number = 50;
+  NumberOfPoints: number = 10;
 
   xl: number | null = null;
   xu: number | null = null;
@@ -112,14 +113,15 @@ export class Phase2 {
     this.isPlotting = true;
 
     const payload = {
-      equation: this.functionStr,
-      start: (this.xl ?? (this.x0 ? this.x0 - 5 : -10)),
-      end: (this.xu ?? (this.x0 ? this.x0 + 5 : 10))
+      Function: this.functionStr,
+      LowerBound: (this.xl ?? (this.x0 ? this.x0 - 5 : -10)),
+      UpperBound: (this.xu ?? (this.x0 ? this.x0 + 5 : 10)),
+      NumberOfPoints:50
     };
 
     this.http.post<any>('http://127.0.0.1:8000/plot', payload).subscribe({
       next: (res) => {
-        this.plotImage = res.imageBase64;
+        this.plotImage = res;
         this.isPlotting = false;
       },
       error: () => {

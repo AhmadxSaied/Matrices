@@ -85,8 +85,8 @@ export class Phase2 {
       Xo_Initial: this.x0,
       X1_Initial: this.x1,
       Tolerance: this.tolerance,
-      max_itr: this.maxIterations,
-      percision: this.precision
+      maxIteration: this.maxIterations,
+      precision: this.precision
     };
     console.log(payload)
     this.http.post<RootResponse>('http://127.0.0.1:8000/solve_root', payload)

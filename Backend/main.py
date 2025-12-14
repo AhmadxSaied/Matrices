@@ -86,7 +86,7 @@ def False_Position(item:Item,all_steps:List['Steps']):
     Sp_Function = sp.sympify(item.Function)
     Symbols = list(Sp_Function.free_symbols)
     MathExpression = sp.lambdify(Symbols,Sp_Function)
-    assert MathExpression(item.X_Lower) * MathExpression(item.X_Upper) <0
+    assert MathExpression(float(item.X_Lower)) * MathExpression(float(item.X_Upper)) <0
     Error = 1.0
     Xu_Loop = item.X_Lower
     Xl_Loop = item.X_Upper
@@ -99,8 +99,8 @@ def False_Position(item:Item,all_steps:List['Steps']):
     Fxrs =[]
     while(Error>=item.Tolerance and iterations<=item.maxIteration):
         iterations=iterations+1
-        FXl = MathExpression(Xl_Loop)
-        FXu =MathExpression(Xu_Loop)
+        FXl = Decimal(MathExpression(float(Xl_Loop)))
+        FXu =Decimal(MathExpression(float(Xu_Loop)))
         Xr_Loop = ((Xl_Loop * FXu)-(Xu_Loop * FXl))/(FXu - FXl)
         FXr = Decimal(MathExpression(float(Xr_Loop)))
         addsteps(all_steps,f"Xr = (({Xl_Loop} * {FXu})-({Xu_Loop} * {FXl}))/({FXu} - {FXl})",X_U=Xu_Loop,X_L=Xl_Loop,X_r=Xr_Loop,F_Xr=FXr,F_Xl=FXl,F_Xu=FXu,Error=Error)
@@ -322,7 +322,7 @@ def Newton_modified(item: Item,all_steps: List['Steps']):
             fp_x = Decimal(f_p(float(x)))
             fpp_x = Decimal(f_pp(float(x)))
             return Decimal(x - (f_x * fp_x)/ (fp_x**2 - f_x * fpp_x))
-        iterations = 1;
+        iterations = 1
         
         for i in range(item.maxIteration):
             if(f_p(float(oldX)) == 0):

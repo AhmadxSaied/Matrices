@@ -102,7 +102,7 @@ def False_Position(item:Item,all_steps:List['Steps']):
         FXl = Decimal(MathExpression(float(Xl_Loop)))
         FXu =Decimal(MathExpression(float(Xu_Loop)))
         Xr_Loop = ((Xl_Loop * FXu)-(Xu_Loop * FXl))/(FXu - FXl)
-        FXr = Decimal(MathExpression(float(Xr_Loop)))
+        FXr = Decimal(MathExpression(float(Xr_Loop)))+Decimal("0")
         addsteps(all_steps,f"Xr = (({Xl_Loop} * {FXu})-({Xu_Loop} * {FXl}))/({FXu} - {FXl})",X_U=Xu_Loop,X_L=Xl_Loop,X_r=Xr_Loop,F_Xr=FXr,F_Xl=FXl,F_Xu=FXu,Error=Error)
         if(np.sign(FXu)==np.sign(FXr)):
             Xu_Loop = Xr_Loop
@@ -153,7 +153,7 @@ def Bisection(item:Item,all_steps:List['Steps']):
         iterations = iterations+1
         FXl = Decimal(MathExpression(float(Xl_Loop)))
         Xr_Loop = Xu_Loop - (Xu_Loop-Xl_Loop)/ Decimal("2")
-        FXr = Decimal(MathExpression(float(Xr_Loop)))
+        FXr = Decimal(MathExpression(float(Xr_Loop)))+Decimal("0")
         Decision = (FXl * FXr)
         addsteps(all_steps,f"Xr = ({Xu_Loop+Xl_Loop})/2",Xu_Loop,Xl_Loop,X_r=Xr_Loop,F_Xr=FXr,F_Xl=FXl,Error=Error)
         if(Decision < 0):
@@ -196,9 +196,9 @@ def str_to_func(exp):
 # exp : f(x) in str format
 # per : percision
 def secant_method(item:Item,all_steps:List['Steps']):
+    start_time = time.perf_counter()
     try:
         getcontext().prec = item.precision if item.precision is not None else 10
-        start_time = time.perf_counter()
         f = str_to_func(item.Function)
         itration = 0
         rel_error = 100
@@ -226,7 +226,7 @@ def secant_method(item:Item,all_steps:List['Steps']):
         end_time = time.perf_counter()
         res_message = "Error"
         why = "failed to converge with max iteration"
-        return Response(res_message,p1,round(end_time-start_time,6),itration,all_steps,why,FinalError=rel_error)
+        return Response(res_message,Decimal('0'),round(end_time-start_time,6),0,all_steps,why,FinalError=Decimal('0'))
 
 
 
@@ -238,9 +238,9 @@ def secant_method(item:Item,all_steps:List['Steps']):
 # exp : magic function g(x) in str format
 # per : percision
 def fixed_point_method(item:Item,all_steps:List['Steps']):
+    start_time = time.perf_counter()
     try:
         getcontext().prec = item.precision if item.precision is not None else 10
-        start_time = time.perf_counter()
         magic_function = str_to_func(item.Function)
         itration = 0
         rel_error = 100
@@ -252,7 +252,6 @@ def fixed_point_method(item:Item,all_steps:List['Steps']):
             rel_error = abs((new_x - x)/new_x) * 100
             itration += 1
             addsteps(all_steps,f"X{itration} = {new_x}",Error=rel_error,Xi_0=x,X_r=new_x)
-            print(f"itration {itration}\nnew_p {new_x}\nrel_error {rel_error}")
             x = new_x
         if(rel_error > item.Tolerance):
             res_message = "Error"
@@ -266,13 +265,13 @@ def fixed_point_method(item:Item,all_steps:List['Steps']):
         end_time = time.perf_counter()
         res_message = "Error"
         why = "failed to converge with max iteration"
-        return Response(res_message,x,round(end_time-start_time,6),itration,all_steps,why,FinalError=rel_error)
+        return Response(res_message,Decimal('0'),round(end_time-start_time,6),0,all_steps,why,FinalError=Decimal('0'))
     
 
 def Newton_Normal(item: Item,all_steps:List['Steps']):
+    start_time = time.perf_counter()
     try:
         getcontext().prec = item.precision if item.precision is not None else 10
-        start_time = time.perf_counter()
         initial_guess = Decimal(item.Xo_Initial) + 0
         maxIterations = item.maxIteration
         x = [initial_guess]
@@ -281,7 +280,7 @@ def Newton_Normal(item: Item,all_steps:List['Steps']):
         f_p = grad(f)
 
         def app(x):
-            return x -f(x) / Decimal(f_p(float(x))) 
+            return x -f(x) / Decimal(f_p(float(x)))
         iterations = 1
 
         for i in range(maxIterations):
@@ -290,7 +289,7 @@ def Newton_Normal(item: Item,all_steps:List['Steps']):
             newX = app(oldX)
             x.append(newX)
             ea = abs(((newX - oldX)/newX) * 100);
-            addsteps(all_steps=all_steps,description=f"{i+1}. current approximation = {newX}" , X_r=newX, F_Xr=f(newX), Error=ea, )
+            addsteps(all_steps=all_steps,description=f"{i+1}. current approximation = {newX}" , X_r=newX, F_Xr=f(newX)+Decimal("0"), Error=ea, )
             if(ea < item.Tolerance):
                 print(f"epsilon reached in {iterations} iterations")
                 end_time = time.perf_counter()
@@ -299,18 +298,19 @@ def Newton_Normal(item: Item,all_steps:List['Steps']):
             iterations +=1
         end_time = time.perf_counter()
         print("max iterations reached")
-        return Response(status="failed", result=newX, executionTime=round(end_time - start_time, 6), TotalIterations=iterations, steps=all_steps, FinalError=ea, errorMessage="Max iteration reached" ) 
+        return Response(status="failed", result=newX, executionTime=round(end_time - start_time, 6), TotalIterations=iterations, steps=all_steps, FinalError=ea, errorMessage="Max iteration reached" )
     except:
         end_time = time.perf_counter()
         res_message = "Error"
         why = "failed to converge with max iteration"
-        return Response(res_message,x,round(end_time-start_time,6),iterations,all_steps,why,FinalError=0)
+        return Response(res_message, Decimal('0'), round(end_time - start_time, 6), 0, all_steps, why,
+                        FinalError=Decimal('0'))
         
 
 def Newton_modified(item: Item,all_steps: List['Steps']):
+    start_time = time.perf_counter()
     try:
         getcontext().prec = item.percision if item.percision is not None else 10
-        start_time = time.perf_counter()
         initial_guess = Decimal(item.Xo_Initial) + 0
         x = [initial_guess]
         oldX = initial_guess
@@ -323,7 +323,7 @@ def Newton_modified(item: Item,all_steps: List['Steps']):
             fpp_x = Decimal(f_pp(float(x)))
             return Decimal(x - (f_x * fp_x)/ (fp_x**2 - f_x * fpp_x))
         iterations = 1
-        
+
         for i in range(item.maxIteration):
             if(f_p(float(oldX)) == 0):
                 return Response(status="Failed", errorMessage="The value of the f`(x) at xo initial = zero, try another initial guess")
@@ -331,7 +331,7 @@ def Newton_modified(item: Item,all_steps: List['Steps']):
             newX = app(oldX);
             x.append(newX);
             ea = abs(((newX - oldX)/newX) * 100);
-            addsteps(all_steps=all_steps,description=f"{i+1}. current approximation = {newX}" , X_r=newX, F_Xr=f(newX), Error=ea, )
+            addsteps(all_steps=all_steps,description=f"{i+1}. current approximation = {newX}" , X_r=newX, F_Xr=f(newX)+Decimal("0"), Error=ea, )
             if(ea < item.Tolerance):
                 print(f"epsilon reached in {iterations} iterations")
                 end_time = time.perf_counter()
@@ -345,4 +345,5 @@ def Newton_modified(item: Item,all_steps: List['Steps']):
         end_time = time.perf_counter()
         res_message = "Error"
         why = "failed to converge with max iteration"
-        return Response(res_message,x,round(end_time-start_time,6),iterations,all_steps,why,FinalError=0)
+        return Response(res_message, Decimal('0'), round(end_time - start_time, 6), 0, all_steps, why,
+                        FinalError=Decimal('0'))

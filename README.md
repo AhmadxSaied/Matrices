@@ -134,4 +134,4 @@ Department: Computer and Systems Engineering
 
 Course: Numerical Computing
 
-Academic Year: 2023–2024
+Academic Year: 2024–2025
